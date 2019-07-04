@@ -389,6 +389,9 @@ summary(mod.glm3)
 Now repeat the exercise using **both** clustering assignments as predictors.
 
 ```{r 4c}
+mod.glm4 <- glm(formula = survived ~ age + female + fare + sibsp + parch + southampton + hclust.group + kmeans.group , data = measured.dat, family = binomial)
+#summary of the logit model:
+summary(mod.glm4)
 
 ```
 
