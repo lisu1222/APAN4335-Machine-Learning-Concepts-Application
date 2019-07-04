@@ -407,11 +407,11 @@ What does it mean to **add information** to a model?  Is clustering a worthwhile
 
 The logistic regressions developed above did not split the data into separate training and testing sets.  What would we have gained by doing so?  Explain your answer in a few sentences.
 
-We are more interested in inference rather than prediction here, to find the unbiased estimate of predictors and to judge the effect that changing one predictor variable may have on the siginificance of coefficients in the logit model. The Train-Test-Validation process attempts to estimate the over-fitting of the model, in order to to achive generalization.
+We are more interested in inference rather than prediction here, to find the unbiased estimate of predictors and to judge the effect that changing one predictor variable may have on the siginificance of coefficients in the logit model. It's more focused on description than prediction. The Train-Test-Validation process attempts to estimate the over-fitting of the model, in order to to achive generalization.
 
 
 ### 5b:  Application of the Titanic's Predictive Model
 
 Would it even make sense to use the logistic regression model for the Titanic's passengers to make a prediction?  Explain your opinion with a few sentences.
 
-
+No, it would not make sense to use the logistic regression model to make a prediction. Because the logistic regression model we built hasn't been evaluated on any samples that were not used to build the model, so that it can provide an unbiased sense of model effectiveness. A biased model that will lead to overfitting, if used to run prediction on unseen data. The Train-Test-Validation process attempts to estimate the over-fitting of the model, in order to to achive generalization.
