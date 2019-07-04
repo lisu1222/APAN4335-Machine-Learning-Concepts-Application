@@ -311,8 +311,8 @@ data.frame(Actual = round(measured.dat[1:10,"survived"],2), Pred = round(pred.gl
 For all of the rows of the **measured.dat**, create an estimated classification of a passenger's survival status by rounding the logistic regression model's estimated likelihood to 1 or 0.  Then compute the percentage of false positives, the percentage of false negatives, and the overall percentage of correct classifications.
 
 ```{r 3f}
+pred.glm <- predict(mod.glm , type = "response")
 measured.dat["mod.glm.pred"]<- factor(ifelse(pred.glm >= 0.5, 1, 0))
-measured.dat["mod.glm.pred"] <- factor(predict(mod.glm))
 
 #create a confusion matrix using confusionMatrix of caret library:
 library("caret")
