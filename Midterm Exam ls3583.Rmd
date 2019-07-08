@@ -1,0 +1,155 @@
+---
+title: "Machine Learning:  Midterm Exam"
+author: "Your Name, Your UNI"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+  theme: cayman
+highlight: github
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55))
+```
+
+```{r seed}
+
+```
+
+```{r libraries}
+
+```
+
+```{r source_files}
+
+```
+
+```{r functions}
+
+```
+
+```{r constants}
+
+```
+
+```{r load_data}
+
+```
+
+
+
+**Directions**:  This midterm contains machine learning topics that were covered in lectures as well as related statistics and coding questions. The exam must be completed using R code.  You are free to use any functions from R's packages unless stated otherwise. For each question, please show your work, including all relevant code and explanations.
+
+**Policies**:  This exam is open book and open note.  You may use any materials that you find helpful in solving the problems.  However, you must explain your answers in your own words and cite any sources.  **No collaboration with others is allowed.  Please do not discuss the midterm with anyone during the exam period**.
+
+## Question 1:  K Nearest Neighbors and Cross Validation
+
+How many neighbors should we choose in KNN to create the most accurate predictions?  One approach is to utilize cross-validation to estimate the error that would be obtained on a testing set.
+
+To evaluate this question, we will use the data set contained in **humberside_leukaemia_lymphoma.csv**.  This file contains similar information to the **humberside** data.frame that is available in the **spatstat.data** library.  The CSV file includes some additional information that will be useful for this problem.  In particular, the variables include:
+
+* **group**:  Each row was randomly assigned to one of five groups, which are labeled here.
+
+* **x, y**:  These two variables represent geographic coordinates for each patient's home address.  Records that are close to each other in Euclidean distance represent patients who lived close by to each other.
+
+* **disease**:  This variable takes the value TRUE for patients who were diagnosed with childhood leukaemia or lymphoma, while patients who did not have these conditions are represented as FALSE.
+
+To utilize KNN and Cross Validation, we will take the following steps:
+
+* We will evaluate values of **k** in integers from 1 to 20.
+
+* Each of the 5 **group**s will be separately used as a validation set.
+
+* For each combination of **k** and **group**, we will fit a KNN model on the four other groups.  This model include **x** and **y** as the predictors, while the **disease** will be the outcome.  The model will generated predicted classifications for the disease states (TRUE or FALSE) on each of the records in the validation set.  As an example, when k = 1 and group = 1, then the KNN model will be fit with 1 neighbor selected using a training set consisting of the rows of data from groups 2, 3, 4, and 5 and a testing set consisting of the rows from group 1.
+
+* Across 20 separate values of **k** and 5 separate values of **group**, you will ultimately fit 100 KNN models.
+
+* For each of these 100 models, you will calculate the error rate as the proportion of the predictions that do not match the actual values.
+
+* Then you will compute the **cross-validated error rate** for each value of **k**.  After fitting the 5 separate KNN models for that value of **k**, you will average the error rates of these 5 sets of predictions.  This value will be the cross-validated error rate for **k** = 1.  Then you will perform a corresponding procedure for each k included.  This will ultimately result in 20 cross-validated error rates, one for each value of **k**.
+
+* After performing this work, you should **plot** the cross-validated error rate as a function of **k**.  Additionally, show a table with the values of **k** in one column and the cross-validated error rate in another column.  Please round the results to a reasonable number of digits that demonstrates the differences in the results but maintains readability.  Displaying this result using the **datatable** function in the **DT** package will allow those who read your report to easily sort the table by either column.  Finally, report on your selected value of **k** and the associated cross-validated error rate that provides the best results.
+
+**Development Notes**:  We recommend using programming techniques to simplify the work of iteratively building many models.  Writing a function that fits the model and calculates the predictive accuracy may help.
+
+```{r q1}
+
+```
+
+
+
+## Question 2:  Logistic Regression 
+
+Using the same data as in the previous question, we will use logistic regression to create a predictive model of the **disease** in terms of the spatial coordinates **x** and **y**.  For this model, use **group 5** as the testing set and all of the other groups as the training set.  Then answer the following questions:
+
+### 2a
+
+Show a summary table of the model's coefficients, rounded to a reasonable number of digits.
+
+```{r 2a}
+
+```
+
+### 2b
+
+Did the patient's geographic location impact the likelihood of developing childhood leukaemia or lymphoma?
+
+
+### 2c
+
+What proportion of the testing set's outcomes are correctly classified by the logistic regression model?
+
+```{r 2c}
+
+```
+
+### 2d
+
+If instead of classifications, we decided to use the logistic regression's predicted probabilities, what would be the median absolute error on the testing set?  Note that the absolute value is given by |a - b|, which is always a non-negative number.  R's absolute value function is **abs()**.
+
+```{r 2d}
+
+```
+
+### 2e
+
+Let's imagine for a moment that we had not used logistic regression at all.  Instead, for each patient in the testing set, we estimated the likelihood of disease by using the percentage of patients with the disease in the training set.  What would be the median absolute error on the testing set using this prediction?
+
+```{r 2e}
+
+```
+
+### 2f
+
+Given the results obtained in the previous two questions, does logistic regression improve upon simply using the average result for all of the patients?  Do these results surprise you?  Explain your reasoning.
+
+
+
+## Question 3:  Conceptual Questions
+
+Answer each question with a short paragraph.
+
+### 3a
+
+Why can we use cross-validation to estimate the predictive accuracy of a model?
+
+
+### 3b
+
+In linear regression, does having a significant p-value for a coefficient ensure that the variable has a meaningful impact on the outcome?
+
+
+### 3c
+
+A laboratory employs a diagnostic blood test that is designed to detect cancer.  Like any test, it occasionally leads to mistaken conclusions.  What would be the real-world meaning of the false positives and false negatives of the test?  Define what these events would be, and then describe the consequences of these mistakes.
+
+
+
+### 3d 
+
+What are the challenges of using hierarchical or kmeans clustering when some of the inputs are categorical variables?
+
+
+
+
