@@ -363,8 +363,6 @@ mod.glm2 <- glm(formula = survived ~ age + female + fare + sibsp + parch + south
 summary(mod.glm2)
 
 #Adding the hierarchical clustering assignments did add some information to the predictions. We can compare the AIC of each model: AIC: 1030.7 vs. 1051.4. The model with hierachical clustering assignments has relatively lower AIC. AIC estimates the relative amount of information lost by a given model: the less information a model loses, the higher the quality of that model.
-#Being assigned to hcluster.group2 and hcluster.group3 were statistically significant at the 0.05 level in the model.
-
 
 ```
 
@@ -382,7 +380,7 @@ mod.glm3 <- glm(formula = survived ~ age + female + fare + sibsp + parch + south
 #summary of the logit model:
 summary(mod.glm3)
 
-
+#Adding kmeans.group as a predictor, compared to the model using hclust.group as predictor, resulted in a slightly higher AIC: 1041.8 vs. 1030.7, but is still lower than the AIC of the original logit model. So using kmeans.group added information to the predictions, but not as much as using hclust.group as the predictor.
 
 ```
 
@@ -396,6 +394,7 @@ mod.glm4 <- glm(formula = survived ~ age + female + fare + sibsp + parch + south
 #summary of the logit model:
 summary(mod.glm4)
 
+#using both clustering assignments as predictors added information to the predictions. It has the lowest AIC (1027.4 ) so far.
 ```
 
 
@@ -404,8 +403,9 @@ summary(mod.glm4)
 What does it mean to **add information** to a model?  Is clustering a worthwhile exercise as a method of building a predictive model?  Write a few sentences to explain your answers.
 
 
+We have several candidate models here to represent the true relation between predictors and outcome. If we knew the true relation, then we could find the information lost from using a candidate model to represent the true model. We want to choose the candidate model that minimized the information loss. If a candidate model, compared to another candidate model, has more information gain, the model quality is relatively lower. AIC is the estimator of the relative quality of statistical models for a given set of data. It is a means for model selection that deals with the trade-off between bias and variance.
 
-
+Clustering is not a worthwile exercise as a method of building a predictive model, because clustering assignments can be directly predicted from the other predictors, resulting in redundancy. Although it doesn't reduce the predictive power of the model as a whole, it affects our interpretation of indivadual predictors. Also, the coefficient estimates may change erratically in response to small changes in the model or the data. 
 
 
 ## Question 5:  Description Versus Prediction
