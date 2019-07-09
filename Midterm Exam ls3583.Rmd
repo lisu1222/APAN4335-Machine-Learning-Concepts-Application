@@ -78,12 +78,14 @@ df <- read.csv("humberside_leukaemia_lymphoma.csv")
 head(df)
 str(df)
 ##validation set 1 to 5 in a list
+
 for (i in 1:5) {
   validation[[i]] <- df[df$group == i, ]
+  train[[i]] <- df[df$group != i, ]
 }
 
-
-validation[[3]]
+validation[[1]]
+train[[1]]
 
 
 
