@@ -1,6 +1,6 @@
 ---
 title: "Machine Learning:  Midterm Exam"
-author: "Your Name, Your UNI"
+author: "Li Su, ls3583"
 date: "`r Sys.Date()`"
 output:
   prettydoc::html_pretty:
@@ -74,6 +74,19 @@ To utilize KNN and Cross Validation, we will take the following steps:
 **Development Notes**:  We recommend using programming techniques to simplify the work of iteratively building many models.  Writing a function that fits the model and calculates the predictive accuracy may help.
 
 ```{r q1}
+df <- read.csv("humberside_leukaemia_lymphoma.csv")
+head(df)
+str(df)
+##validation set 1 to 5 in a list
+for (i in 1:5) {
+  validation[[i]] <- df[df$group == i, ]
+}
+
+
+validation[[3]]
+
+
+
 
 ```
 
