@@ -1,0 +1,420 @@
+---
+title: "Homework 3"
+author: "Li Su"
+date: "2019-07-04"
+output:
+  prettydoc::html_pretty:
+  theme: cayman
+highlight: github
+---
+  
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55), tidy = FALSE)
+```
+
+```{r seed}
+set.seed(seed = 9291)
+```
+
+```{r libraries}
+
+library(PASWR)
+library(dendextend)
+```
+
+```{r source_files}
+
+```
+
+```{r functions}
+
+```
+
+```{r constants}
+
+```
+
+
+```{r load_data}
+
+```
+
+```{r clean_data}
+
+```
+
+
+## About the Data
+
+For this assignment, we will be analyzing data on the passengers from the ill-fated maiden voyage of the Titanic.  Within R's **PASWR** library, the data set **titanic3** can be accessed using the command **data(titanic3)**.  A description of the variables is available in the help file for this data set by typing **help(titanic3)**.
+
+
+## Question 1:  Data Exploration
+
+
+### 1a:  Survival
+
+How many passengers survived, and how many passed away as a result of the crash?
+
+```{r 1a}
+data("titanic3")
+head(titanic3,10)
+
+nrow(titanic3[titanic3$survived==1,])
+#500 passengers survived
+nrow(titanic3[titanic3$survived==0,])
+#809 passengers passed away as a result of the crash
+
+
+#alternatively using:
+table(titanic3$survived)
+```
+
+
+### 1b:  Class of Tickets
+
+The ship sold tickets in 1st, 2nd, and 3rd class areas.  How many passengers were in each class?
+
+```{r 1b}
+
+table(titanic3$pclass)
+#323 passengers in 1st class, 277 passengers in 2nd, and 709 passengers in 3rd class
+
+```
+
+
+### 1c:  Point of Embarcation
+
+Most of the passengers embarked from Southampton.  Let's create a new variable in the data set called **southampton** that will have the value 1 for passengers who embarked from Southampton and 0 for all other passengers (including any missing values).  Create this variable and then show how many passengers had the values of 1 and how many had the value of 0 for the **southampton** variable.
+
+```{r 1c}
+
+library(tidyverse)
+
+titanic3 <-titanic3 %>%
+  mutate(southampton = ifelse(embarked == "Southampton" , 1, 0))
+
+table(titanic3$southampton)
+#there are 914 passengers had the value of 1, and 395 passengers had the value of 0 for the southampton variable.
+
+```
+
+
+
+### 1d:  Sex of the Passengers
+
+Create a variable called **female** with the value 1 for females and 0 for males.  Show the counts of each category.
+
+
+```{r 1d}
+
+titanic3 <-titanic3 %>%
+  mutate(female = ifelse(sex == "female" , 1, 0))
+
+table(titanic3$female)
+#there are 466 females and 843 males among the passengers
+
+```
+
+### 1e: Fares
+
+Use the **summary** function to display some key figures about the distribution of the fares that the passengers paid.
+
+```{r 1e}
+
+summary(titanic3$fare)
+
+```
+
+
+
+### 1f:  Family Members
+
+Now use the summary function to display the key figures about the distribution of the number of siblings (**sibsp**) and separately for the number of parents or children (**parch**) on board.
+
+```{r 1f}
+
+summary(titanic3$sibsp)
+summary(titanic3$parch)
+
+```
+
+### 1g:  Appropriate Summarization
+
+Do you think that providing the quartiles, minimum, maximum, and mean value are the best way to summarize the counts of the number of family members for each passenger?  If not, what would be a better way to summarize these variables?
+
+```{r 1g}
+
+#Providing the quartiles, minimum, maximum and mean are not the best way to summarize the counts for number of family members, since this count is not continuous. There are finite number of possible values that was recorded for the number of family members for each passenger.
+
+#Using frequency distribution table is a better option to summarize discrete data. In terms of graphs, boxplot, which represents the quartiles, minimum, maximum and mean, is ideal to present continuous data, while a barplot is suitable to visualize discrete data.
+
+table(titanic3$sibsp)
+table(titanic3$parch)
+```
+
+
+
+## Question 2:  Clustering Models
+
+To better investigate the relationships between the passengers, we will use clustering analysis on the following variables:
+
+* age
+* female
+* fare
+* sibsp
+* parch
+* southampton
+
+
+For this exercise, create a separate data.frame called **measured.dat**.  This object should include only the variables listed above, along with the **survived** variable.  Use the **na.omit** function to restrict the rows to those completely measured (without any missing data).  Then use the **scale** function to standardize all of the values in units of the number of standard deviations above average, which will be stored in a matrix called **subdat**.  The **subdat** will only contain the predictors, not the **survived** outcome.  We will use the **subdat** object to answer the following questions.
+
+```{r q2}
+#create a separate data.frame called measured.dat:
+measured.dat <- titanic3 %>% select(age, female, fare, sibsp, parch, southampton, survived)
+#remove missing data:
+measured.dat <- na.omit(measured.dat)
+
+subdat <- scale(measured.dat[c("age", "female", "fare", "sibsp", "parch", "southampton")])
+```
+
+### 2a:  Hierarchical Clustering
+
+Use hierarchicical clustering with complete linkage to cluster the **subdat**.  Assign each passenger to one of 5 clusters.  Add these assignments as a column called **hclust.group** to the **measured.dat**.  Then show a dendrogram depicting the results of the hierarchical clustering.  Using the **color_branches** method of the **dendextend** library may provide a helpful visualization.
+
+```{r 2a}
+
+dist <- dist(subdat, method = "euclidean")
+clusters <- hclust(dist, method = "complete")
+#Do H-clustering with 5 clusters: 
+cluster_cut <- cutree(clusters, k = 5)
+
+#add a column of clusters assignment to measured.dat
+measured.dat <- measured.dat%>%
+  mutate(hclust.group = cluster_cut)
+
+#using color_branches method of the dendextend library to visualize clustering:
+plot(color_branches(as.dendrogram(clusters),k = 5,groupLabels = F))
+
+```
+
+### 2b:  K-Means
+
+Now use K-Means clustering with 5 centers and iter.max = 20 to cluster the **subdat**.  Set the randomization seed to 821 just prior to running the algorithm. Add the clustering assignments as a column called **kmeans.group** to the **measured.dat**.  Then plot the **fare** versus the **age** for each passenger while assigning different colors to their kmeans clustering assignment.
+
+```{r 2b}
+set.seed(seed = 821)
+# Do k-means clustering with five clusters, repeat 20 times: 
+km <- kmeans(subdat, centers = 5, iter.max = 20)
+
+#add a column of kmeans cluster assignments to subdat
+measured.dat <- measured.dat %>%
+  mutate(kmeans.group = km$cluster)
+head(measured.dat)
+
+# Plot the fare as function of age. Color by cluster
+plot(measured.dat$age, measured.dat$fare, xlab = "Age",ylab ="Fare",col = measured.dat$kmeans.group)
+
+```
+
+
+## Question 3:  Models
+
+### 3a
+
+Now we would like to build a logistic regression model for **survived** using the **measured.dat**.  Include all of the following predictor variables:
+
+* age
+* female
+* fare
+* sibsp
+* parch
+* southampton
+
+Fit this model and show a summary of the estimated coefficients.
+
+```{r 3a}
+head(measured.dat)
+
+mod.glm <- glm(formula = survived ~ age + female + fare + sibsp + parch + southampton, data = measured.dat, family = binomial)
+summary(mod.glm)
+
+```
+
+
+### 3b:  Odds Ratios
+
+The model's estimated coefficients are on a logarithmic scale.  The estimated Odds Ratio, which is the exponential of the estimated coefficient, can be more easily interpreted.  Compute the estimated Odds Ratio of each variable.  Then compute a 95% confidence interval for the Odds Ratio.  To do so, you can exponentiate the 95% confidence interval for the coefficient.
+
+
+```{r 3b}
+#compute 95% CI using qnorm function:
+mod.glm.coef.matrix <- summary(mod.glm)$coefficients
+mod.glm.coef <- mod.glm.coef.matrix[, colnames(mod.glm.coef.matrix) == "Estimate"]
+mod.glm.coef.ste <- mod.glm.coef.matrix[, colnames(mod.glm.coef.matrix) == "Std. Error"]
+
+lower.ci <- qnorm(0.025, mean = mod.glm.coef, sd = mod.glm.coef.ste)
+upper.ci <- qnorm(0.975, mean = mod.glm.coef, sd = mod.glm.coef.ste)
+
+#take exponentiation for values of coefficient estimate, lower.ci and upper.ci, and round to 2 digits:
+Variable = names(mod.glm.coef)
+Coef = round(exp(mod.glm.coef),digits = 2)
+Lower = round(exp(lower.ci), digits = 2)
+Upper = round(exp(upper.ci), digits = 2)
+#display in a dataframe:
+mod.glm.res <- data.frame( Variable ,Coef , Lower , Upper , row.names = NULL)
+mod.glm.res
+
+##alternatively, using confint function and cbind function to summarize odds ratios and 95% CI:
+exp(cbind(coef = coef(mod.glm), confint(mod.glm)))
+
+```
+
+
+### 3c:  Increased Odds of Survival
+
+Which factors led to an increased likelihood of survival that was statistically significant at the 0.05 level?
+
+```{r 3c}
+
+#Telling from the estimate and P-value, we conclude that female and fare, which are all positive values, led to an increased likelihood of survival, given a 0.05 statistical significance level.
+
+```
+
+
+### 3d:  Decreased Odds of Survival
+
+Which factors led to an decreased likelihood of survival that was statistically significant at the 0.05 level?
+
+```{r 3d}
+
+#Telling from the estimate and P-value, we conclude that age,sibsp and southampton, which are all negative, fare led to an decreased likelihood of survival, given a 0.05 statistical significance level.
+
+```
+
+### 3e:  In-Sample Results
+
+For the first 10 rows of the **measured.dat**, show the model's fitted value (an estimated probability of survival) and the passenger's actual survival status.
+
+```{r 3e}
+mod.glm.pred <- mod.glm$fitted.values
+
+data.frame(actual = round(measured.dat[1:10, "survived"],2), predict = round(mod.glm.pred[1:10], 2))
+```
+
+### 3f:  In-Sample Evaluation
+
+For all of the rows of the **measured.dat**, create an estimated classification of a passenger's survival status by rounding the logistic regression model's estimated likelihood to 1 or 0.  Then compute the percentage of false positives, the percentage of false negatives, and the overall percentage of correct classifications.
+
+```{r 3f}
+measured.dat["mod.glm.pred"]<- factor(ifelse(mod.glm.pred >= 0.5, 1, 0))
+
+#create a confusion matrix using confusionMatrix of caret library:
+library("caret")
+conf <- confusionMatrix(measured.dat[["mod.glm.pred"]], reference = factor(measured.dat[[ "survived" ]]), positive = "1")
+conf
+#create a new column mod.glm.newclass, with levels of FP, FN, TP, TN:
+measured.dat["mod.glm.newclass"] <- ifelse(measured.dat[[ "survived" ]]== 0 & measured.dat[["mod.glm.pred"]]== 0, "TN", 
+                      ifelse(measured.dat[[ "survived" ]]== 0 & measured.dat[["mod.glm.pred"]]== 1, "FP",
+                       ifelse(measured.dat[[ "survived" ]]== 1 & measured.dat[["mod.glm.pred"]]== 0, "FN", "TP")))
+
+#Create raw confusion matrix using "table" function:
+conf.val <- table(measured.dat[["mod.glm.newclass"]])
+conf.val
+#compute percentage of false positives, the percentage of false negatives, and the overall percentage of correct classifications(accuracy):
+library("scales")
+false.positive.rate <- percent(conf.val[["FP"]]/sum(conf.val[["FP"]],conf.val[["TN"]]))
+false.negative.rate <- percent(conf.val[["FN"]]/sum(conf.val[["FN"]],conf.val[["TP"]]))
+accuracy <- percent((conf.val[["TP"]]+conf.val[["TN"]])/sum(conf.val))
+false.positive.rate
+false.negative.rate
+accuracy
+```
+
+## Question 4:  Added Information
+
+Does a clustering assignment add information to a predictive model?  One way to assess this question is to add the group assignments of a clustering procedure (as a categorical variable) to a regression model that already includes the variables that were used to build the clustering model.  With this approach, we will evaluate the information added by our earlier clustering work in Question 2 to the logistic regression model built in Question 3.
+
+### 4a:  Hierarchical Clustering Assignments as a Predictor of Survival
+
+Fit a logistic regression model of **survived** in terms of the following variables:
+
+* age
+* female
+* fare
+* sibsp
+* parch
+* southampton
+* hclust.group (as a categorical variable)
+
+Show a summary of the estimated coefficients and evaluate whether the hierarchical clustering assignments add information to the predictions.
+
+```{r 4a}
+#convert hclus.group to categorical variable
+measured.dat$hclust.group <- factor(measured.dat$hclust.group)
+#run another logit regression:
+mod.glm2 <- glm(formula = survived ~ age + female + fare + sibsp + parch + southampton + hclust.group, data = measured.dat, family = binomial)
+#summary of the logit model:
+summary(mod.glm2)
+
+#Adding the hierarchical clustering assignments did add some information to the predictions. We can compare the AIC of each model: AIC: 1030.7 vs. 1051.4. The model with hierachical clustering assignments has relatively lower AIC. AIC estimates the relative amount of information lost by a given model: the less information a model loses, the higher the quality of that model.
+
+```
+
+
+### 4b:  K-Means Clustering Assignments as a Predictor of Survival
+
+Repeat the exercise of 4a using the **kmeans.group** as a predictor instead of **hclust.group**.
+
+
+```{r 4b}
+#convert kmeans.group to categorical variable
+measured.dat$kmeans.group <- factor(measured.dat$kmeans.group)
+#run another logit regression:
+mod.glm3 <- glm(formula = survived ~ age + female + fare + sibsp + parch + southampton + kmeans.group, data = measured.dat, family = binomial)
+#summary of the logit model:
+summary(mod.glm3)
+
+#Adding kmeans.group as a predictor, compared to the model using hclust.group as predictor, resulted in a slightly higher AIC: 1041.8 vs. 1030.7, but is still lower than the AIC of the original logit model. So using kmeans.group added information to the predictions, but not as much as using hclust.group as the predictor.
+
+```
+
+
+### 4c:  Both Clustering Assignments
+
+Now repeat the exercise using **both** clustering assignments as predictors.
+
+```{r 4c}
+mod.glm4 <- glm(formula = survived ~ age + female + fare + sibsp + parch + southampton + hclust.group + kmeans.group , data = measured.dat, family = binomial)
+#summary of the logit model:
+summary(mod.glm4)
+
+#using both clustering assignments as predictors added information to the predictions. It has the lowest AIC (1027.4 ) so far.
+```
+
+
+### 4d:  Interpretation of Added Information
+
+What does it mean to **add information** to a model?  Is clustering a worthwhile exercise as a method of building a predictive model?  Write a few sentences to explain your answers.
+
+
+We have several candidate models here to represent the true relation between predictors and outcome. If we knew the true relation, then we could find the information lost from using a candidate model to represent the true model. We want to choose the candidate model that minimized the information loss. If a candidate model, compared to another candidate model, has more information gain, the model quality is relatively lower. AIC is the estimator of the relative quality of statistical models for a given set of data. It is a means for model selection that deals with the trade-off between bias and variance.
+
+Clustering is not a worthwile exercise as a method of building a predictive model, because clustering assignments can be directly predicted from the other predictors, resulting in redundancy. Although it doesn't reduce the predictive power of the model as a whole, it affects our interpretation of indivadual predictors. Also, the coefficient estimates may change erratically in response to small changes in the model or the data. 
+
+
+## Question 5:  Description Versus Prediction
+
+### 5a:  Training and Testing Sets?
+
+The logistic regressions developed above did not split the data into separate training and testing sets.  What would we have gained by doing so?  Explain your answer in a few sentences.
+
+We are more interested in inference rather than prediction here, to find the unbiased estimate of predictors and to judge the effect that changing one predictor variable may have on the siginificance of coefficients in the logit model. It's more focused on description than prediction. The Train-Test-Validation process attempts to estimate the over-fitting of the model, in order to to achive generalization.
+
+
+### 5b:  Application of the Titanic's Predictive Model
+
+Would it even make sense to use the logistic regression model for the Titanic's passengers to make a prediction?  Explain your opinion with a few sentences.
+
+No, it would not make sense to use the logistic regression model to make a prediction. Because the logistic regression model we built hasn't been evaluated on any samples that were not used to build the model, so that it can provide an unbiased sense of model effectiveness. A biased model that will lead to overfitting, if used to run prediction on unseen data. The Train-Test-Validation process attempts to estimate the over-fitting of the model, in order to to achive generalization.
