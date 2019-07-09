@@ -81,31 +81,46 @@ str(df)
 library(class)
 library(data.table)
 library(tidyverse)
+library(DT)
+
+
+#set seed to 100 
 set.seed(100)
-knn.mis.list <- function( k.values ){
-  mis.list <- list()
-  mis.k.df <- data.frame()
+
+cross.validated.error.rate <- function( k.values ){
+  error.list <- list()
+  error.k.df <- data.frame()
   for (i in 1:5){
+    #create a validation list and a training list seperately, each contains 5 dataframes 
     validation[[i]] <- df[df$group == i, ]
     train[[i]] <- df[df$group != i, ]
+    #loop over k.values to compute mis.rate for each train-validate set
     for (k in 1:length(k.values)){
-     knn.k <- knn(train[[i]][,c('x','y')], validation[[i]][, c('x','y')], cl = train[[i]]$disease, k)
+     knn.k <- knn(train[[i]][, c('x','y')], validation[[i]][, c('x','y')], cl = train[[i]]$disease, k)
      mis.k <- mean(validation[[i]]$disease != knn.k)
-     mis.k.df[k, 'k'] <-k
-     mis.k.df[k,'mis_rate'] <- mis.k
+     #output a dataframe of misclassification rate of n k values for each train-validate set 
+     error.k.df[k, 'k'] <-k
+     error.k.df[k, 'mis_rate'] <- mis.k
     }
-  mis.list[[i]] <- mis.k.df
+  #combine dataframe to a list
+  error.list[[i]] <- error.k.df
   }
-  DT <- rbindlist(mis.list)
-  DT <- DT %>%group_by(k) %>% summarise(mis.rate.average = mean(mis_rate))
+  #rbind to convert to a data table, and aggregate mis rate by group k and output an avarage of mis.rate
+  DT <- rbindlist(error.list) %>% 
+    group_by(k) %>% summarise(cross.validated.error.rate = round(mean(mis_rate), digits = 5 )) 
+  
   return(DT)
 }
 
+#plot cross.validated.error.rate as a function of k:
+DT <-cross.validated.error.rate(k.values = 1:20)
+plot(DT, type = 'both', ylab = 'Cross-validated Error Rate', xlab = 'Number of Neighbors')
+axis(side= 1, at= DT$k)
 
-knn.mis.list(k.values = 1:20)
+#display the outcome in interactive table using datatable function
+datatable(cross.validated.error.rate(k.values = 1:20))
 
-
-
+#The final selected value of K is 16, with a cross-validated error rate at 0.31524.
 
 ```
 
