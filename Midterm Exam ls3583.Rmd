@@ -14,11 +14,15 @@ opts_chunk$set(echo = TRUE, comment="", warning = FALSE, message = FALSE, tidy.o
 ```
 
 ```{r seed}
-
+set.seed(100)
 ```
 
 ```{r libraries}
-
+library(class)
+library(data.table)
+library(tidyverse)
+library(DT)
+library(ROCR)
 ```
 
 ```{r source_files}
@@ -83,41 +87,44 @@ library(DT)
 
 #set seed to 100 
 set.seed(100)
-
 cross.validated.error.rate <- function( k.values ){
+  train <- list()
+  validation <- list()
   error.list <- list()
-  error.k.df <- data.frame()
+  error.list.component <- data.frame()
   for (i in 1:5){
     #create a validation list and a training list seperately, each contains 5 dataframes 
     validation[[i]] <- df[df$group == i, ]
     train[[i]] <- df[df$group != i, ]
     #loop over k.values to compute mis.rate for each train-validate set
     for (k in 1:length(k.values)){
-     knn.k <- knn(train[[i]][, c('x','y')], validation[[i]][, c('x','y')], cl = train[[i]]$disease, k)
+     knn.k <- knn(train[[i]][, c('x','y')], validation[[i]][, c('x','y')], cl = train[[i]]$disease, k )
      mis.k <- mean(validation[[i]]$disease != knn.k)
      #output a dataframe of misclassification rate of n k values for each train-validate set 
-     error.k.df[k, 'k'] <-k
-     error.k.df[k, 'mis_rate'] <- mis.k
+     error.list.component[k, 'k'] <- k
+     error.list.component[k, 'mis_rate'] <- mis.k
     }
   #combine dataframe to a list
-  error.list[[i]] <- error.k.df
+  error.list[[i]] <- error.list.component
   }
-  #rbind to convert to a data table, and aggregate mis rate by group k and output an avarage of mis.rate
+  #rbind to convert to a data table, and aggregate mis rate by group k and output an 
+  #avarage of mis.rate
   DT <- rbindlist(error.list) %>% 
     group_by(k) %>% summarise(cross.validated.error.rate = round(mean(mis_rate), digits = 5 )) 
-  
   return(DT)
 }
 
+
 #plot cross.validated.error.rate as a function of k:
-DT <-cross.validated.error.rate(k.values = 1:20)
+DT <- cross.validated.error.rate(k.values = 1:20)
 plot(DT, type = 'both', ylab = 'Cross-validated Error Rate', xlab = 'Number of Neighbors')
 axis(side= 1, at= DT$k)
 
 #display the outcome in interactive table using datatable function
 datatable(cross.validated.error.rate(k.values = 1:20))
 
-#The final selected value of K is 16, with a cross-validated error rate at 0.31524.
+#The final selected value of K is 20, with a cross-validated error rate at 0.31537.
+
 ```
 
 
@@ -144,7 +151,6 @@ Did the patient's geographic location impact the likelihood of developing childh
 
 Patient's geographic location almost has no impact on the likelihood of developing chidhood leukaemia or lymphoma. (P-value is way above 0.05)
 
-
 ### 2c
 
 What proportion of the testing set's outcomes are correctly classified by the logistic regression model?
@@ -152,6 +158,14 @@ What proportion of the testing set's outcomes are correctly classified by the lo
 ```{r 2c}
 mean( train$disease != TRUE) #68.7% accuracy as baseline to beat with
 
+train.predict <- mod.glm$fitted.values
+ROCRpred = prediction(train.predict,train$disease)
+#ROC plot:
+roc.perf <- performance(ROCRpred,"tpr","fpr")
+plot(roc.perf,xlab="1 - Specificity",ylab="Sensitivity", colorize = TRUE)
+
+#Find the optimal cut using a cost measure in the ROCR package. 
+#In this case, we are more interested in predicting the true positive, thus the cost of false positive #and false negative are not the same. Let's set differnt costs for them - fn twice as costly as fp:
 library(ROCR)
 train.predict <- mod.glm$fitted.values
 ROCRpred= prediction(train.predict,train$disease)
@@ -171,7 +185,9 @@ test.pred <- rep(FALSE, 40)
 test.pred[test.probs > cut.optimal] = TRUE
 
 table(prediction = test.pred, reality = test$disease)
-mean(mod.glm.pred == test$disease)
+
+mean(test.pred == test$disease)
+
 #the proportion of correctly classfied is 77.5%.
 
 ```
@@ -207,7 +223,9 @@ Given the results obtained in the previous two questions, does logistic regressi
 
 Median Absolute Error from logistic regression is bigger than from simply using the average result. 
 
-But MAE is a linear score which means that all the individual differences are weighted equally. It is an ideal metric to estimate a true linear relationship. But in logistic regression, the true relationship is not linear, individual differences are weighted differently, based on a pre-ditermined threshold. That's why we use accuracy, AUC as the metrics in classification instead of linear scores such as RMSE, MAE.
+
+But MAE is a linear score which means that all the individual differences are weighted equally. It is an ideal metric to estimate a true linear relationship. But in logistic regression, the true relationship is not linear, individual differences are weighted differently, based on a pre-ditermined threshold. That is why we use accuracy rate or AUC as the metrics to assess the quality of classification models, instead of using linear scores such as RMSE or MAE.
+
 
 
 ## Question 3:  Conceptual Questions
@@ -219,9 +237,21 @@ Answer each question with a short paragraph.
 Why can we use cross-validation to estimate the predictive accuracy of a model?
 
 
+When we trained a model, we want to make sure it works well on the unseen data and achieve desired accuracy of the predictions.
+Cross-validation is a re-sampling procedure, that patrition the available sample of data into complementary subsets, perform the analysis on one subset and validate the analysis on the other subset for multiple rounds using different partitions, and gives a combiend outcome. 
+For example, in k-fold cv, sample is partitioned to k fols, and we fit the model using k-1 folds and validate the model using the remaining kth fold. Repeat the procedure untill every k-fold serve as the test set. And then combine the validation results by taking the average of errors as an overall metric for estimating the model's predictive performance. 
+Using cross-validation, we can make sure all obervations are used for both training and validation, and each observation is used for validation exactly once. We reduce the variability of model by using a combined result, which is a less biased representative of the true relationship of the sample data.
+
+
 ### 3b
 
 In linear regression, does having a significant p-value for a coefficient ensure that the variable has a meaningful impact on the outcome?
+
+Having a significant p-value doesn't necessarily ensure the variable has a meaningful impact on the outcome. 
+Instead, we need to combine p-value and estimate coefficient to draw the conclusion.
+p-value tests the null hypothesis that the variable has no correlation with the dependent variable. If the p-value is less than the significant level, the sample data provideS enough evidence to reject the null hypothesis, thus we can tell there is a non-zero correlation - changes in the independent variable are associated with changes in the response.
+The value of estimate coefficient, on the other side, is a measure of effect size of changes in the independet varialbe on the dependent varialbe. And with standard error of the coefficient, we can calculate the confidence interval of the strenghth of effect, therefore we can decide whether the varialbe has a meaningful impact on the outcome or not, and what range of size the impact can be.
+
 
 
 ### 3c
@@ -229,11 +259,15 @@ In linear regression, does having a significant p-value for a coefficient ensure
 A laboratory employs a diagnostic blood test that is designed to detect cancer.  Like any test, it occasionally leads to mistaken conclusions.  What would be the real-world meaning of the false positives and false negatives of the test?  Define what these events would be, and then describe the consequences of these mistakes.
 
 
+False positive refers to an error in which the test result improperly indicates that a patient has cancer, when in reality the patient doen't have cancer. If false positive error happens, the healthy person will be wrongly given cancer-related tests and treatment.
+False negative erors in which the test result falsely indicates that a patient doen't have cancer, when in reality the patient does have cancer. If false negative error happens, there will be a treatment delay for the patient, and may result in lowering the cancer patient survival rate.
+
 
 ### 3d 
 
 What are the challenges of using hierarchical or kmeans clustering when some of the inputs are categorical variables?
 
-
-
+H-cluster and kmeans clustering methods reply on matching dissimilarity/distance measure among data points. They are used commonly for numerical data.
+But the sample space for categorical data is discrete, and may not be ordered nicely, then it will be not meaningful to calculate the Eclidean distance between clusters.
+Secondly, h-cluster has linkage methods such as complete/single/average to calculate cluster distance before merging clusters. Kmeans use means for that purpose. They are not applicable for categorical data. Categorical data, on the other hand, should use modes as the metric for clustering.
 
