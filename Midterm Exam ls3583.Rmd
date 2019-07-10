@@ -136,11 +136,18 @@ Show a summary table of the model's coefficients, rounded to a reasonable number
 
 ```{r 2a}
 
+train <- df[df$group != 5,]
+test <- df[df$group == 5,]
+mod.glm <- glm(data = train, formula = disease ~ x +y, family = 'binomial' )
+
+round(summary(mod.glm)$coefficients, digits = 3)
 ```
 
 ### 2b
 
 Did the patient's geographic location impact the likelihood of developing childhood leukaemia or lymphoma?
+
+Patient's geographic location almost has no impact on the likelihood of developing chidhood leukaemia or lymphoma. (P-value is way above 0.05)
 
 
 ### 2c
@@ -148,6 +155,45 @@ Did the patient's geographic location impact the likelihood of developing childh
 What proportion of the testing set's outcomes are correctly classified by the logistic regression model?
 
 ```{r 2c}
+
+#We are more interested in predicting disease. Hence in this case, we would predict that all children have disease. By doing this . we would get 62/141 observations correct and an accuracy of 30.54%. So our baseline model has an accuracy of 30.54%.This is what we’ll try to beat with our logistic regression model.
+table(df$disease)
+mean( df$disease == TRUE) #30.54% has disease in the data set
+
+#to find the optimal threshold:
+library(ROCR)
+train.predict <- mod.glm$fitted.values
+ROCRpred = prediction(train.predict,train$disease)
+#performance function and plotting
+ROCRperf <- performance(ROCRpred,"tpr","fpr")
+plot(ROCRperf,xlab="1 - Specificity",ylab="Sensitivity", colorize = TRUE) 
+cutoffs <- data.frame(cut=ROCRperf@alpha.values[[1]], fpr=ROCRperf@x.values[[1]], 
+                      tpr=ROCRperf@y.values[[1]])
+cutoffs
+
+acc.perf <- performance(ROCRpred, measure = "acc")
+plot(acc.perf)
+
+
+#
+mod.glm.probs <- predict(mod.glm, newdata = test, type ="response" )
+dim(test)
+mod.glm.pred <- rep(FALSE, 40)
+#set a threshold at 0.5, create a confusion matrix:
+mod.glm.pred[$mod.glm.probs > .38] = TRUE
+
+
+table(prediction = mod.glm.pred, reality = test$disease)
+# this prediction has 0 proportion of outcoming as having diesease, showing a false negative conclusion. Since we are more interested to predict true positive, we can be improve by lowering the threshold level.
+
+mean(mod.glm.pred == test$disease)
+#72.5% of testing set's outcomes are correctly classified, 27.5% are misclassified
+
+
+
+
+
+
 
 ```
 
