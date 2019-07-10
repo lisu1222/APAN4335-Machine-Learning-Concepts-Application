@@ -75,14 +75,11 @@ To utilize KNN and Cross Validation, we will take the following steps:
 
 ```{r q1}
 df <- read.csv("humberside_leukaemia_lymphoma.csv")
-head(df)
-str(df)
 
 library(class)
 library(data.table)
 library(tidyverse)
 library(DT)
-
 
 #set seed to 100 
 set.seed(100)
@@ -121,7 +118,6 @@ axis(side= 1, at= DT$k)
 datatable(cross.validated.error.rate(k.values = 1:20))
 
 #The final selected value of K is 16, with a cross-validated error rate at 0.31524.
-
 ```
 
 
@@ -135,7 +131,6 @@ Using the same data as in the previous question, we will use logistic regression
 Show a summary table of the model's coefficients, rounded to a reasonable number of digits.
 
 ```{r 2a}
-
 train <- df[df$group != 5,]
 test <- df[df$group == 5,]
 mod.glm <- glm(data = train, formula = disease ~ x +y, family = 'binomial' )
@@ -155,45 +150,29 @@ Patient's geographic location almost has no impact on the likelihood of developi
 What proportion of the testing set's outcomes are correctly classified by the logistic regression model?
 
 ```{r 2c}
+mean( train$disease != TRUE) #68.7% accuracy as baseline to beat with
 
-#We are more interested in predicting disease. Hence in this case, we would predict that all children have disease. By doing this . we would get 62/141 observations correct and an accuracy of 30.54%. So our baseline model has an accuracy of 30.54%.This is what we’ll try to beat with our logistic regression model.
-table(df$disease)
-mean( df$disease == TRUE) #30.54% has disease in the data set
-
-#to find the optimal threshold:
 library(ROCR)
 train.predict <- mod.glm$fitted.values
-ROCRpred = prediction(train.predict,train$disease)
-#performance function and plotting
-ROCRperf <- performance(ROCRpred,"tpr","fpr")
-plot(ROCRperf,xlab="1 - Specificity",ylab="Sensitivity", colorize = TRUE) 
-cutoffs <- data.frame(cut=ROCRperf@alpha.values[[1]], fpr=ROCRperf@x.values[[1]], 
-                      tpr=ROCRperf@y.values[[1]])
-cutoffs
+ROCRpred= prediction(train.predict,train$disease)
+#ROC plot:
+roc.perf <- performance(ROCRpred,"tpr","fpr")
+plot(roc.perf,xlab="1 - Specificity",ylab="Sensitivity", colorize = TRUE)
+```
+Find the optimal cut using a cost measure in the ROCR package. In this case we are more interested in predicting the true positive, thus the cost of false positive and false negative are not the same. Let's set differnt costs for them - fn twice as costly as fp:
+```{r 2c}
+cost.perf <- performance(ROCRpred, measure = "cost", cost.fp = 1, cost.fn = 2)
+#the optimal cut output:
+cut.optimal <- ROCRpred@cutoffs[[1]][which.min(cost.perf@y.values[[1]])]
 
-acc.perf <- performance(ROCRpred, measure = "acc")
-plot(acc.perf)
+#apply the optimal cut to predict using test set:
+test.probs <- predict(mod.glm, newdata = test, type ="response" )
+test.pred <- rep(FALSE, 40)
+test.pred[test.probs > cut.optimal] = TRUE
 
-
-#
-mod.glm.probs <- predict(mod.glm, newdata = test, type ="response" )
-dim(test)
-mod.glm.pred <- rep(FALSE, 40)
-#set a threshold at 0.5, create a confusion matrix:
-mod.glm.pred[$mod.glm.probs > .38] = TRUE
-
-
-table(prediction = mod.glm.pred, reality = test$disease)
-# this prediction has 0 proportion of outcoming as having diesease, showing a false negative conclusion. Since we are more interested to predict true positive, we can be improve by lowering the threshold level.
-
+table(prediction = test.pred, reality = test$disease)
 mean(mod.glm.pred == test$disease)
-#72.5% of testing set's outcomes are correctly classified, 27.5% are misclassified
-
-
-
-
-
-
+#the proportion of correctly classfied is 77.5%.
 
 ```
 
@@ -203,6 +182,9 @@ If instead of classifications, we decided to use the logistic regression's predi
 
 ```{r 2d}
 
+median(abs(test.probs - test$disease ))
+#0.3310779
+
 ```
 
 ### 2e
@@ -210,6 +192,12 @@ If instead of classifications, we decided to use the logistic regression's predi
 Let's imagine for a moment that we had not used logistic regression at all.  Instead, for each patient in the testing set, we estimated the likelihood of disease by using the percentage of patients with the disease in the training set.  What would be the median absolute error on the testing set using this prediction?
 
 ```{r 2e}
+#percentage of patients with the disease in the training set
+mean(train$disease == TRUE) #31.28834%
+#mad
+median(abs(mean(train$disease == TRUE) - test$disease )) #31.28834%
+
+data.table(as.numeric(test$disease),test.probs, rep('0.31.28834', n =length(test.probs)))
 
 ```
 
@@ -217,6 +205,9 @@ Let's imagine for a moment that we had not used logistic regression at all.  Ins
 
 Given the results obtained in the previous two questions, does logistic regression improve upon simply using the average result for all of the patients?  Do these results surprise you?  Explain your reasoning.
 
+Median Absolute Error from logistic regression is bigger than from simply using the average result. 
+
+But MAE is a linear score which means that all the individual differences are weighted equally. It is an ideal metric to estimate a true linear relationship. But in logistic regression, the true relationship is not linear, individual differences are weighted differently, based on a pre-ditermined threshold. That's why we use accuracy, AUC as the metrics in classification instead of linear scores such as RMSE, MAE.
 
 
 ## Question 3:  Conceptual Questions
