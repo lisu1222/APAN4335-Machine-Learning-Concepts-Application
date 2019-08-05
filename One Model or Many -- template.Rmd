@@ -1,0 +1,129 @@
+---
+title: "One Model or Many?"
+author: "My Name, My UNI"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55))
+```
+
+```{r seed}
+set.seed(35)
+```
+
+```{r libraries}
+
+```
+
+```{r source_files}
+
+```
+
+```{r constants}
+
+```
+
+
+```{r functions}
+
+```
+
+
+```{r load_data}
+
+```
+
+```{r clean_data}
+
+```
+
+## Introduction
+
+## Models {.tabset}
+
+### Category 1:  Fill In Name {.tabset}
+
+#### One Model
+
+```{r cat1_one_model}
+
+```
+
+#### Many Models
+
+```{r cat1_many_models}
+
+```
+
+
+### Category 2:  Fill In Name {.tabset}
+
+#### One Model
+
+```{r cat2_one_model}
+
+```
+
+#### Many Models
+
+```{r cat2_many_models}
+
+```
+
+
+### Category 3:  Fill In Name {.tabset}
+
+#### One Model
+
+```{r cat3_one_model}
+
+```
+
+#### Many Models
+
+```{r cat3_many_models}
+
+```
+
+
+### Category 4:  Fill In Name {.tabset}
+
+#### One Model
+
+```{r cat4_one_model}
+
+```
+
+#### Many Models
+
+```{r cat4_many_models}
+
+```
+
+
+### Category 5:  Fill In Name {.tabset}
+
+#### One Model
+
+```{r cat5_one_model}
+
+```
+
+#### Many Models
+
+```{r cat5_many_models}
+
+```
+
+## Scoreboard
+
+```{r scoreboard}
+
+```
+
+## Discussion
+
+## References
+

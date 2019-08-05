@@ -23,9 +23,12 @@ library(data.table)
 library(caret)
 library(leaps)
 <<<<<<< HEAD
+<<<<<<< HEAD
 library(glmnet)
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 ```{r source_files}
@@ -108,16 +111,22 @@ train <- train[-c(1,2)]
 test <- test[-c(1,2)]
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 fit.ols <-lm (accommodations ~.,data = train)
 
 coef.ols <- round(fit.ols$coefficients,2)
 coef.ols
 =======
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 lm.mod <-lm (accommodations ~.,data = train)
 
 coeff <- round(lm.mod$coefficients,2)
 coeff
+<<<<<<< HEAD
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 
 ```
 
@@ -128,6 +137,7 @@ Based on the linear model's results, which categories are associated with an **i
 ```{r 2b}
 #extract p.values of the lm model
 <<<<<<< HEAD
+<<<<<<< HEAD
 p.values.ols <- summary(fit.ols)$coefficients[, 4]
 
 #subset variables with 0.05 signigicance level
@@ -136,6 +146,8 @@ coef.select
 #select those whose coefficients are positive, and sort in descending 
 sort(coef.select[coef.select>0], decreasing = TRUE)
 =======
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 p.values <- summary(lm.mod)$coefficients[, 4]
 
 #subset variables with 0.05 signigicance level
@@ -143,7 +155,10 @@ coeff.select <- coeff[p.value < 0.05]
 coeff.select
 #select those whose coefficients are positive, and sort in descending 
 sort(coeff.select[coeff.select>0], decreasing = TRUE)
+<<<<<<< HEAD
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 
 ```
 
@@ -153,10 +168,14 @@ Which categories are associated with an **decrease** in the average ratings for 
 
 ```{r 2c}
 <<<<<<< HEAD
+<<<<<<< HEAD
 sort(coef.select[coef.select< 0], decreasing = FALSE)
 =======
 sort(coeff.select[coeff.select< 0], decreasing = FALSE)
 >>>>>>> refs/remotes/origin/master
+=======
+sort(coeff.select[coeff.select< 0], decreasing = FALSE)
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 
@@ -166,12 +185,17 @@ Based on the linear model's results, which categories did not show statistically
 
 ```{r 2d}
 <<<<<<< HEAD
+<<<<<<< HEAD
 coef.unselect <- coef.ols[p.values.ols >= 0.05]
 coef.unselect
 =======
 coeff.unselect <- coeff[p.values >= 0.05]
 coeff.unselect
 >>>>>>> refs/remotes/origin/master
+=======
+coeff.unselect <- coeff[p.values >= 0.05]
+coeff.unselect
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 
@@ -183,6 +207,7 @@ Using the root mean squared error (RMSE) as a metric, how accurate is the linear
 ```{r 2e}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 pred.ols <- predict(fit.ols, newdata = test)
 rmse.ols <- sqrt(mean(pred.ols- test$accommodations)^2)
 rmse.ols
@@ -191,6 +216,11 @@ pred <- predict(lm.mod, newdata = test)
 lm.rmse <- sqrt(mean(pred- test$accommodations)^2)
 lm.rmse
 >>>>>>> refs/remotes/origin/master
+=======
+pred <- predict(lm.mod, newdata = test)
+lm.rmse <- sqrt(mean(pred- test$accommodations)^2)
+lm.rmse
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 
 ```
 
@@ -209,9 +239,13 @@ full.mod = lm(accommodations~.,data=train)
 
 output.forward <- capture.output(forwardStepwise <- step(empty.mod,scope=list(upper=full.mod,lower=empty.mod),direction='forward'))
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 summary(forwardStepwise)
 >>>>>>> refs/remotes/origin/master
+=======
+summary(forwardStepwise)
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 
 round(forwardStepwise$coefficients,2)
 
@@ -247,6 +281,7 @@ Use the results from the forward selection and backward selection models to make
 ```{r 3d}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 pred.forward <- predict(forwardStepwise, newdata=test)
 pred.backward <- predict(backwardStepwise, newdata=test)
 
@@ -256,6 +291,8 @@ rmse.backward <- sqrt(mean(pred.backward - test$accommodations)^2)
 round(data.table(rmse.ols, rmse.forward, rmse.backward),4)
 
 =======
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 forward.pred <- predict(forwardStepwise, newdata=test)
 backward.pred <- predict(backwardStepwise, newdata=test)
 
@@ -263,7 +300,10 @@ forward.rmse <- sqrt(mean(forward.pred - test$accommodations)^2)
 backward.rmse <- sqrt(mean(backward.pred - test$accommodations)^2)
 
 data.table(lm.rmse, forward.rmse, backward.rmse)
+<<<<<<< HEAD
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 
@@ -278,6 +318,7 @@ This can be implemented using the **glmnet** function in the **glmnet** package.
 ```{r 4a}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 x<- data.matrix(train[, 2:23])
 y <- train$accommodations
 fit.ridge <- cv.glmnet(x, y, alpha = 0 )
@@ -285,6 +326,8 @@ round(coef(fit.ridge),2)
 
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 ### 4b
@@ -296,11 +339,14 @@ This can be implemented using the **glmnet** function in the **glmnet** package.
 ```{r 4b}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 fit.lasso <- cv.glmnet(x, y, alpha = 1 )
 round(coef(fit.lasso),2)
 
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 ### 4c
@@ -309,6 +355,7 @@ Use the ridge and lasso regression models to generate predictions on the testing
 
 ```{r 4c}
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 pred.lasso <- predict(fit.lasso, data.matrix(test[,2:23]))
 pred.ridge <- predict(fit.ridge, data.matrix(test[,2:23]))
@@ -319,6 +366,8 @@ round(data.table(rmse.ols, rmse.forward, rmse.backward, rmse.ridge, rmse.lasso),
 
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 ### 4d
@@ -326,10 +375,13 @@ round(data.table(rmse.ols, rmse.forward, rmse.backward, rmse.ridge, rmse.lasso),
 Comment on the results.  Were the results of the models reasonably similar or quite different?  What is the reason for this?
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 The results of the models reasonably similar to each other mainly because the number of observations is much much larger than the number of features in the dataset. Least squares regression technique is intended for low-dimensional setting like this. The resulting linear model can perform reasonabaly well on the test set.
 
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 
 ## Question 5
 
@@ -341,6 +393,7 @@ Create a reduced training set that only contains the first 250 rows of the train
 
 ```{r 5a}
 <<<<<<< HEAD
+<<<<<<< HEAD
 dim(train)
 train.reduced <- train[1:250,]
 
@@ -349,6 +402,9 @@ round(coef(fit.ridge1),2)
 =======
 
 >>>>>>> refs/remotes/origin/master
+=======
+
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 
 ```
 
@@ -360,11 +416,14 @@ Now fit a lasso regression model on this reduced training set with a similar spe
 ```{r 5b}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 fit.lasso1 <- cv.glmnet(data.matrix(train.reduced[, 2:23]), train.reduced$accommodations, alpha = 1 )
 round(coef(fit.lasso1),2)
 
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 ### 5c
@@ -374,10 +433,13 @@ How different are the coefficients for the full and reduced ridge regression mod
 ```{r 5c}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 cbind(round(coef(fit.ridge),2),  round(coef(fit.ridge1),2))
 
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 
@@ -387,6 +449,7 @@ How different are the coefficients for the full and reduced lasso regression mod
 
 ```{r 5d}
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 cbind(round(coef(fit.lasso),2), round(coef(fit.lasso1),2))
 
@@ -399,12 +462,19 @@ cbind(round(coef(fit.lasso),2), round(coef(fit.lasso1),2))
 
 
 >>>>>>> refs/remotes/origin/master
+=======
+```
+
+
+
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ### 5e
 
 Use the ridge and lasso regression models that were fit on the **reduced** training set to generate predictions on the **full** testing set.  Compute the RMSE for each set of predictions.  Add these values to the table of RMSE values that include all of the earlier RMSE results.  Round the table to a reasonable number of digits.
 
 ```{r 5e}
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 pred.ridge1 <- predict(fit.ridge1, data.matrix(test[,2:23]))
 pred.lasso1 <- predict(fit.lasso1, data.matrix(test[,2:23]))
@@ -416,6 +486,8 @@ round(data.table(rmse.ols, rmse.forward, rmse.backward, rmse.ridge, rmse.lasso, 
 
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
 ```
 
 ### 5f
@@ -423,8 +495,11 @@ round(data.table(rmse.ols, rmse.forward, rmse.backward, rmse.ridge, rmse.lasso, 
 What conclusions can you draw about the usage of selection procedures and regularization methods based upon this work?
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Subset selection procedures increase model interpretability by automatically performing feature selection in a multiple regression model. To fit the backward stepwise method, number of observations n should be larger than the number of predictors p. In contrast, forward stepwise can be used even when n < p.
 Regulization methods can yeild better prediction accuracy compared to least squares in certain settings.If number of observations is much larger than p, the number of variables, then the least squares estimate tend to also have low variance, and hence will perform well on test observations. However, if n is not much larger than p, as we saw in the reduced train set, then there can be a lot of variability in the least squares fit, resulting in overfitting and consequently poor predictions on test set. If this case the least squares method will not be a good choice since the variance is infinite, while the regularization methods, by reducing the variance, perform well on unseen test set.
  
 =======
 >>>>>>> refs/remotes/origin/master
+=======
+>>>>>>> 070e1b68bb6b7cee526444f0e7350799bb45a2eb
