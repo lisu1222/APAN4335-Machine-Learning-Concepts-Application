@@ -1,6 +1,6 @@
 ---
 title: "One Model or Many?"
-author: "My Name, My UNI"
+author: "Li Su, ls3583"
 date: "`r Sys.Date()`"
 output: html_document
 ---
@@ -14,7 +14,15 @@ set.seed(35)
 ```
 
 ```{r libraries}
-
+library(class)
+library(glmnet)
+library(rpart)
+library(caret)
+library(randomForest)
+library(gbm)
+library(e1071)
+library(data.table)
+library(tidyverse)
 ```
 
 ```{r source_files}
@@ -32,37 +40,112 @@ set.seed(35)
 
 
 ```{r load_data}
-
+df <-read.csv('Diabetes and Readmissions.csv')
+summary(df$readmitted)
 ```
 
 ```{r clean_data}
-
+df$readmitted  <- ifelse(df$readmitted == "<30", TRUE, FALSE)
+summary(df$readmitted)
 ```
 
 ## Introduction
 
 ## Models {.tabset}
 
-### Category 1:  Fill In Name {.tabset}
+### Category 1:  Logistic Regression {.tabset}
 
 #### One Model
 
 ```{r cat1_one_model}
+predictors.one <- c('age','race','gender','time_in_hospital','num_medications')
+train <- df[df$evaluation_set == 'train', c(predictors.one, 'readmitted')]
+test <- df[df$evaluation_set == 'test', c(predictors.one, 'readmitted')]
+summary(test$readmitted)
+summary(train$readmitted)
 
+#train.X <- df[df$evaluation_set == 'train', predictors.one]
+#train.Y <- df[df$evaluation_set == 'train', 'readmitted']
+#test.X <- df[df$evaluation_set == 'test', predictors.one]
+#test.Y <- df[df$evaluation_set == 'test', 'readmitted']
+#train.X
+
+#knn.one<- knn(train.X, test.X, cl= train.Y, k=3 )
+#fit to training set
+fit.glm.one <- glm(formula = readmitted ~., data = train, family = binomial)
+
+#predicted classification
+pred.glm.one <- predict(fit.glm.one, newdata = test, type = 'response')
+pred.glm.one <- ifelse(pred.glm.one>0.5, TRUE, FALSE)
+#evaluation: prediction accuracy
+acc.glm.one <- mean(pred.glm.one == test$readmitted)
+acc.glm.one
 ```
 
 #### Many Models
 
 ```{r cat1_many_models}
+#create train subset list by appending filtered outcome to a list
+train.subset  <- list()
+for (x in c('[0-50)',  '[50-60)',  '[60-70)',  '[70-80)','[80-100)' )){ 
+  tmp <-  train[train$age == x,]
+  train.subset <- rlist::list.append(train.subset, tmp)
+}
+#create test subset list by appending filtered outcome to a list
+test.subset <- list()
+for (x in c('[0-50)',  '[50-60)',  '[60-70)',  '[70-80)','[80-100)' )){ 
+  tmp <-  test[test$age == x,]
+  test.subset <- rlist::list.append(test.subset, tmp)
+}
+
+
+#iteration model - run through subgroup and output the predicted class
+pred.glm.many <- function(){
+  pred.list <- list()
+  for (i in 1:5){
+    glm.many <- glm(formula = readmitted ~ race + gender + time_in_hospital + num_medications, data = train.subset[[i]], family = binomial)
+    #make predictions on the test data
+    pred.list[[i]] <- data.frame('predict' = ifelse((predict(glm.many, newdata = test.subset[[i]], type = 'response'))>0.5, 1, 0 ))
+  }
+  return (pred.list)
+}
+
+pred.glm.many <- pred.glm.many()
+
+#calculate the aggregated classification accuracy
+acc.glm.many <- function(){
+  pred.aggregate <- rbindlist(pred.glm.many)
+  test.aggregate <- rbindlist(test.subset)
+  acc.aggregate <- mean(pred.aggregate == test.aggregate$readmitted)
+  return (acc.aggregate)
+}
+
+
+acc.glm.many <- acc.glm.many()
+acc.glm.many
 
 ```
 
 
-### Category 2:  Fill In Name {.tabset}
+### Category 2:  Lasso Regression {.tabset}
 
 #### One Model
 
 ```{r cat2_one_model}
+# Find the best lambda using cross-validation
+
+x <- model.matrix(readmitted ~., train)[,-1]
+y <- train$readmitted
+cv.lasso <- cv.glmnet(x,y, alpha = 1,family = 'binomial')
+
+lasso.one <- glmnet(x, y, alpha = 1, family = "binomial", lambda = cv.lasso$lambda.min)
+# Make predictions on the test data
+x.test <- model.matrix(readmitted ~., test)[,-1]
+prob.lasso.one <- predict(lasso.one, newx = x.test)
+pred.lasso.one <- ifelse(prob.lasso.one > 0.5, 1, 0)
+# Model accuracy
+acc.lasso.one <- mean(pred.lasso.one == test$readmitted)
+acc.lasso.one
 
 ```
 
@@ -70,44 +153,161 @@ set.seed(35)
 
 ```{r cat2_many_models}
 
+#iteration model - run through subgroup and output the predicted class
+pred.lasso.many <- function(){
+  pred.list <- list()
+  for (i in 1:5){
+    x <- model.matrix(readmitted ~ race + gender + time_in_hospital + num_medications, train.subset[[i]])[,-1]
+    y <- train.subset[[i]]$readmitted
+    cv.lasso.many <- cv.glmnet(x,y, alpha = 1,family = 'binomial')
+    lasso.many <- glmnet(x, y, alpha = 1, family = "binomial", lambda =cv.lasso.many$lambda.min)
+    #make predictions on the test data
+    x.test <- model.matrix(readmitted ~race + gender + time_in_hospital + num_medications, test.subset[[i]])[,-1]
+    pred.list[[i]] <- data.frame(ifelse((predict(lasso.many, newx = x.test)) >0.5,1,0))
+  }
+  return (pred.list)
+}
+
+pred.lasso.many <- pred.lasso.many()
+
+#calculate the aggregated classification accuracy
+acc.lasso.many <- function(){
+  pred.aggregate <- rbindlist(pred.lasso.many)
+  test.aggregate <- rbindlist(test.subset)
+  acc.aggregate <- mean(pred.aggregate == test.aggregate$readmitted)
+  return (acc.aggregate)
+}
+
+acc.lasso.many <- acc.lasso.many()
+acc.lasso.many
 ```
 
 
-### Category 3:  Fill In Name {.tabset}
+### Category 3:  Decision Tree {.tabset}
 
 #### One Model
 
 ```{r cat3_one_model}
+set.seed(234)
 
+tree <- rpart(as.factor(readmitted) ~., data=train, method = "class")
+print(tree)
+# We are seeing only the root node for this tree model, 
+#is probabaly due to the fact that we have extremely imbalanced target classes: 
+prop.table(table(train$readmitted))
+
+
+# force rpart to grow the more complex tree
+tree2 <- rpart(readmitted ~., data=train,control=rpart.control(minsplit = 1, minbucket = 2, cp = 2e-05))
+printcp(tree2)
+#From the result:
+#we see at zero nsplit, CP is aready low
+#and starting from nsplit == 0, the cross validation error(error)
+#increases as the number of splits increase.
+
+pruned.tree <- prune(tree2, cp = tree2$cptable[which.min(tree2$cptable[,"xerror"]),"CP"])
+printcp(pruned.tree)
+#By pruning the complexed tree, we also get the root node tree, which means the root node model is the best model in this case.
+
+#make prediction
+pred.tree <- predict(pruned.tree, newdata = test,type = 'class' )
+
+#accuracy
+acc.tree.one <- mean(pred.tree == test$readmitted)
+acc.tree.one
 ```
 
 #### Many Models
 
 ```{r cat3_many_models}
+#iteration model - run through subgroup and output the predicted class
+pred.tree.many <- function(){
+  pred.list <- list()
+  for (i in 1:5){
+    tree.many <- rpart(readmitted ~ race + gender + time_in_hospital + num_medications, data = train.subset[[i]], method = "class")
+    pruned.tree.many <- prune(tree.many, cp = tree.many$cptable[which.min(tree.many$cptable[,"xerror"]),"CP"])
+    #make predictions on the test data
+    pred.list[[i]] <- data.frame(predict(pruned.tree.many, newdata = test.subset[[i]], type = 'class'))
+  }
+  return (pred.list)
+}
 
+pred.tree.many <- pred.tree.many()
+
+#calculate the aggregated classification accuracy
+acc.tree.many <- function(){
+  pred.aggregate <- rbindlist(pred.tree.many)
+  test.aggregate <- rbindlist(test.subset)
+  acc.aggregate <- mean(pred.aggregate == test.aggregate$readmitted)
+  return (acc.aggregate)
+}
+
+acc.tree.many <- acc.tree.many()
+acc.tree.many
 ```
 
 
-### Category 4:  Fill In Name {.tabset}
+### Category 4:  Random Forest {.tabset}
 
 #### One Model
 
 ```{r cat4_one_model}
+# Fit the cv model on the training set -- gave up for endless computation time
+#cvForest <- train(
+#  as.factor(readmitted)~., data = train, method = "rf",
+#  trControl = trainControl("cv", number = 10),
+#  importance = TRUE
+#  )
+#cvForest
 
+
+#run randomForest with 500 trees (the default value) and default mtry
+rf.one <- randomForest(readmitted~.,data= train,ntree=500, response = 'class')
+
+prob.rf.one <- predict(rf.one, newdata = test, type = 'class')
+pred.rf.one <- ifelse(prob.rf.one>0.5,1,0)
+
+acc.rf.one <- mean(pred.rf.one == test$readmitted)
+acc.rf.one
 ```
 
 #### Many Models
 
 ```{r cat4_many_models}
 
+pred.rf.many <- function(){
+  pred.list <- list()
+  for (i in 1:5){
+    rf.many <- randomForest(readmitted ~ race + gender + time_in_hospital + num_medications, data= train.subset[[i]], ntree=500)
+    #make predictions on the test data
+    pred.list[[i]] <- data.frame(ifelse(predict(rf.many, newdata = test.subset[[i]], type = 'class') >0.5, 1, 0))
+  }
+  return (pred.list)
+}
+
+pred.rf.many <- pred.rf.many()
+
+#calculate the aggregated classification accuracy
+acc.rf.many <- function(){
+  pred.aggregate <- rbindlist(pred.rf.many)
+  test.aggregate <- rbindlist(test.subset)
+  acc.aggregate <- mean(pred.aggregate == test.aggregate$readmitted)
+  return (acc.aggregate)
+}
+
+acc.rf.many <- acc.rf.many()
+acc.rf.many
 ```
 
 
-### Category 5:  Fill In Name {.tabset}
+### Category 5:  SVM {.tabset}
 
 #### One Model
 
 ```{r cat5_one_model}
+
+svm.one <- svm(as.factor(readmitted)~., data = train, kernel = 'linear', cost = 10, scale = FALSE)
+
 
 ```
 
