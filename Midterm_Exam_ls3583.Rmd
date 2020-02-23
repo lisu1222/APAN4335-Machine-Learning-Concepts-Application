@@ -1,0 +1,249 @@
+---
+title: "Machine Learning:  Midterm Exam"
+author: "Li Su, ls3583"
+date: "`r Sys.Date()`"
+output:
+  prettydoc::html_pretty:
+  theme: cayman
+highlight: github
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55))
+```
+
+```{r seed}
+set.seed(100)
+```
+
+```{r libraries}
+library(class)
+library(data.table)
+library(tidyverse)
+library(DT)
+library(ROCR)
+```
+
+```{r source_files}
+
+```
+
+```{r functions}
+
+```
+
+```{r constants}
+
+```
+
+```{r load_data}
+
+```
+
+
+
+**Directions**:  This midterm contains machine learning topics that were covered in lectures as well as related statistics and coding questions. The exam must be completed using R code.  You are free to use any functions from R's packages unless stated otherwise. For each question, please show your work, including all relevant code and explanations.
+
+**Policies**:  This exam is open book and open note.  You may use any materials that you find helpful in solving the problems.  However, you must explain your answers in your own words and cite any sources.  **No collaboration with others is allowed.  Please do not discuss the midterm with anyone during the exam period**.
+
+## Question 1:  K Nearest Neighbors and Cross Validation
+
+How many neighbors should we choose in KNN to create the most accurate predictions?  One approach is to utilize cross-validation to estimate the error that would be obtained on a testing set.
+
+To evaluate this question, we will use the data set contained in **humberside_leukaemia_lymphoma.csv**.  This file contains similar information to the **humberside** data.frame that is available in the **spatstat.data** library.  The CSV file includes some additional information that will be useful for this problem.  In particular, the variables include:
+
+* **group**:  Each row was randomly assigned to one of five groups, which are labeled here.
+
+* **x, y**:  These two variables represent geographic coordinates for each patient's home address.  Records that are close to each other in Euclidean distance represent patients who lived close by to each other.
+
+* **disease**:  This variable takes the value TRUE for patients who were diagnosed with childhood leukaemia or lymphoma, while patients who did not have these conditions are represented as FALSE.
+
+To utilize KNN and Cross Validation, we will take the following steps:
+
+* We will evaluate values of **k** in integers from 1 to 20.
+
+* Each of the 5 **group**s will be separately used as a validation set.
+
+* For each combination of **k** and **group**, we will fit a KNN model on the four other groups.  This model include **x** and **y** as the predictors, while the **disease** will be the outcome.  The model will generated predicted classifications for the disease states (TRUE or FALSE) on each of the records in the validation set.  As an example, when k = 1 and group = 1, then the KNN model will be fit with 1 neighbor selected using a training set consisting of the rows of data from groups 2, 3, 4, and 5 and a testing set consisting of the rows from group 1.
+
+* Across 20 separate values of **k** and 5 separate values of **group**, you will ultimately fit 100 KNN models.
+
+* For each of these 100 models, you will calculate the error rate as the proportion of the predictions that do not match the actual values.
+
+* Then you will compute the **cross-validated error rate** for each value of **k**.  After fitting the 5 separate KNN models for that value of **k**, you will average the error rates of these 5 sets of predictions.  This value will be the cross-validated error rate for **k** = 1.  Then you will perform a corresponding procedure for each k included.  This will ultimately result in 20 cross-validated error rates, one for each value of **k**.
+
+* After performing this work, you should **plot** the cross-validated error rate as a function of **k**.  Additionally, show a table with the values of **k** in one column and the cross-validated error rate in another column.  Please round the results to a reasonable number of digits that demonstrates the differences in the results but maintains readability.  Displaying this result using the **datatable** function in the **DT** package will allow those who read your report to easily sort the table by either column.  Finally, report on your selected value of **k** and the associated cross-validated error rate that provides the best results.
+
+**Development Notes**:  We recommend using programming techniques to simplify the work of iteratively building many models.  Writing a function that fits the model and calculates the predictive accuracy may help.
+
+```{r q1}
+df <- read.csv("humberside_leukaemia_lymphoma.csv")
+
+set.seed(100)
+cross.validated.error.rate <- function( k.values ){
+  train <- list()
+  validation <- list()
+  error.list <- list()
+  error.list.component <- data.frame()
+  for (i in 1:5){
+    #create a validation list and a training list seperately, each contains 5 dataframes 
+    validation[[i]] <- df[df$group == i, ]
+    train[[i]] <- df[df$group != i, ]
+    #loop over k.values to compute mis.rate for each train-validate set
+    for (k in 1:length(k.values)){
+     knn.k <- knn(train[[i]][, c('x','y')], validation[[i]][, c('x','y')], cl = train[[i]]$disease, k )
+     mis.k <- mean(validation[[i]]$disease != knn.k)
+     #output a dataframe of misclassification rate of n k values for each train-validate set 
+     error.list.component[k, 'k'] <- k
+     error.list.component[k, 'mis_rate'] <- mis.k
+    }
+  #combine dataframe to a list
+  error.list[[i]] <- error.list.component
+  }
+  #rbind to convert to a data table, and aggregate mis rate by group k and output an 
+  #avarage of mis.rate
+  DT <- rbindlist(error.list) %>% 
+    group_by(k) %>% summarise(cross.validated.error.rate = round(mean(mis_rate), digits = 5 )) 
+  return(DT)
+}
+
+
+#plot cross.validated.error.rate as a function of k:
+DT <- cross.validated.error.rate(k.values = 1:20)
+plot(DT, type = 'both', ylab = 'Cross-validated Error Rate', xlab = 'Number of Neighbors')
+axis(side= 1, at= DT$k)
+
+#display the outcome in interactive table using datatable function
+datatable(cross.validated.error.rate(k.values = 1:20))
+
+#The final selected value of K is 20, with a cross-validated error rate at 0.31537.
+```
+
+
+
+## Question 2:  Logistic Regression 
+
+Using the same data as in the previous question, we will use logistic regression to create a predictive model of the **disease** in terms of the spatial coordinates **x** and **y**.  For this model, use **group 5** as the testing set and all of the other groups as the training set.  Then answer the following questions:
+
+### 2a
+
+Show a summary table of the model's coefficients, rounded to a reasonable number of digits.
+
+```{r 2a}
+train <- df[df$group != 5,]
+test <- df[df$group == 5,]
+mod.glm <- glm(data = train, formula = disease ~ x +y, family = 'binomial' )
+
+round(summary(mod.glm)$coefficients, digits = 3)
+```
+
+### 2b
+
+Did the patient's geographic location impact the likelihood of developing childhood leukaemia or lymphoma?
+
+Patient's geographic location almost has no impact on the likelihood of developing chidhood leukaemia or lymphoma. (P-value is way above 0.05)
+
+### 2c
+
+What proportion of the testing set's outcomes are correctly classified by the logistic regression model?
+
+```{r 2c}
+
+train.predict <- mod.glm$fitted.values
+ROCRpred = prediction(train.predict,train$disease)
+#ROC plot:
+roc.perf <- performance(ROCRpred,"tpr","fpr")
+plot(roc.perf,xlab="1 - Specificity",ylab="Sensitivity", colorize = TRUE)
+
+#Find the optimal cut using a cost measure in the ROCR package. 
+#In this case, we are more interested in predicting the true positive, thus the cost of false positive #and false negative are not the same. Let's set differnt costs for them - fn twice as costly as fp:
+cost.perf <- performance(ROCRpred, measure = "cost", cost.fp = 1, cost.fn = 2)
+#the optimal cut output:
+cut.optimal <- ROCRpred@cutoffs[[1]][which.min(cost.perf@y.values[[1]])]
+
+#apply the optimal cut to predict using test set:
+test.probs <- predict(mod.glm, newdata = test, type ="response" )
+test.pred <- rep(FALSE, 40)
+test.pred[test.probs > cut.optimal] = TRUE
+
+table(prediction = test.pred, reality = test$disease)
+mean(test.pred == test$disease)
+#the proportion of correctly classfied is 77.5%.
+
+```
+
+### 2d
+
+If instead of classifications, we decided to use the logistic regression's predicted probabilities, what would be the median absolute error on the testing set?  Note that the absolute value is given by |a - b|, which is always a non-negative number.  R's absolute value function is **abs()**.
+
+```{r 2d}
+
+median(abs(test.probs - test$disease ))
+#0.3310779
+
+```
+
+### 2e
+
+Let's imagine for a moment that we had not used logistic regression at all.  Instead, for each patient in the testing set, we estimated the likelihood of disease by using the percentage of patients with the disease in the training set.  What would be the median absolute error on the testing set using this prediction?
+
+```{r 2e}
+#percentage of patients with the disease in the training set
+mean(train$disease == TRUE) #31.28834%
+#mad
+median(abs(mean(train$disease == TRUE) - test$disease )) #31.28834%
+```
+
+### 2f
+
+Given the results obtained in the previous two questions, does logistic regression improve upon simply using the average result for all of the patients?  Do these results surprise you?  Explain your reasoning.
+
+Median Absolute Error from logistic regression is bigger than from simply using the average result. 
+
+But MAE is a linear score which means that all the individual differences are weighted equally. It is an ideal metric to estimate a true linear relationship. But in logistic regression, the true relationship is not linear, individual differences are weighted differently, based on a pre-ditermined threshold. That is why we use accuracy rate or AUC as the metrics to assess the quality of classification models, instead of using linear scores such as RMSE or MAE.
+
+
+## Question 3:  Conceptual Questions
+
+Answer each question with a short paragraph.
+
+### 3a
+
+Why can we use cross-validation to estimate the predictive accuracy of a model?
+
+
+When we trained a model, we want to make sure it works well on the unseen data and achieve desired accuracy of the predictions.
+Cross-validation is a re-sampling procedure, that patrition the available sample of data into complementary subsets, perform the analysis on one subset and validate the analysis on the other subset for multiple rounds using different partitions, and gives a combiend outcome. 
+For example, in k-fold cv, sample is partitioned to k fols, and we fit the model using k-1 folds and validate the model using the remaining kth fold. Repeat the procedure untill every k-fold serve as the test set. And then combine the validation results by taking the average of errors as an overall metric for estimating the model's predictive performance. 
+Using cross-validation, we can make sure all obervations are used for both training and validation, and each observation is used for validation exactly once. We reduce the variability of model by using a combined result, which is a less biased representative of the true relationship of the sample data.
+
+
+### 3b
+
+In linear regression, does having a significant p-value for a coefficient ensure that the variable has a meaningful impact on the outcome?
+
+Having a significant p-value doesn't necessarily ensure the variable has a meaningful impact on the outcome. 
+Instead, we need to combine p-value and estimate coefficient to draw the conclusion.
+p-value tests the null hypothesis that the variable has no correlation with the dependent variable. If the p-value is less than the significant level, the sample data provideS enough evidence to reject the null hypothesis, thus we can tell there is a non-zero correlation - changes in the independent variable are associated with changes in the response.
+The value of estimate coefficient, on the other side, is a measure of effect size of changes in the independet varialbe on the dependent varialbe. And with standard error of the coefficient, we can calculate the confidence interval of the strenghth of effect, therefore we can decide whether the varialbe has a meaningful impact on the outcome or not, and what range of size the impact can be.
+
+
+
+### 3c
+
+A laboratory employs a diagnostic blood test that is designed to detect cancer.  Like any test, it occasionally leads to mistaken conclusions.  What would be the real-world meaning of the false positives and false negatives of the test?  Define what these events would be, and then describe the consequences of these mistakes.
+
+
+False positive refers to an error in which the test result improperly indicates that a patient has cancer, when in reality the patient doen't have cancer. If false positive error happens, the healthy person will be wrongly given cancer-related tests and treatment.
+False negative erors in which the test result falsely indicates that a patient doen't have cancer, when in reality the patient does have cancer. If false negative error happens, there will be a treatment delay for the patient, and may result in lowering the cancer patient survival rate.
+
+
+### 3d 
+
+What are the challenges of using hierarchical or kmeans clustering when some of the inputs are categorical variables?
+
+H-cluster and kmeans clustering methods reply on matching dissimilarity/distance measure among data points. They are used commonly for numerical data.
+But the sample space for categorical data is discrete, and may not be ordered nicely, then it will be not meaningful to calculate the Eclidean distance between clusters.
+Secondly, h-cluster has linkage methods such as complete/single/average to calculate cluster distance before merging clusters. Kmeans use means for that purpose. They are not applicable for categorical data. Categorical data, on the other hand, should use modes as the metric for clustering.
+

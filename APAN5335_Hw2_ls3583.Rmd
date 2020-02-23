@@ -1,0 +1,263 @@
+---
+title: "Homework 2"
+author: "LI SU; ls3583"
+date: "2019-06-20"
+output:
+  prettydoc::html_pretty:
+  theme: cayman
+highlight: github
+---
+  
+```{r setup, include=FALSE}
+library(knitr)
+opts_chunk$set(echo = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55), tidy = FALSE)
+```
+
+```{r libraries}
+
+```
+
+```{r source_files}
+
+```
+
+```{r functions}
+
+```
+
+```{r constants}
+
+```
+
+```{r load_data}
+
+```
+
+```{r clean_data}
+
+```
+
+
+**Directions**: please submit your homework as two files — .Rmd and .html — on the Canvas class website.
+
+## Question 1: Bias-Variance Tradeoff (15 points)
+
+The diagram below illustrates the Bias-Variance Tradeoff.  Different components of the diagram are labeled with the letters A through I.
+
+![](Bias Variance Tradeoff Diagram.png)
+
+Identifications for the nine labels of the provided figure include:
+
+A.  Total Mean Squared Error (MSE) on the Testing Set
+
+B.  Variance of the Estimator
+
+C.  Squared Bias
+
+D.  The flexibility level of the model corresponding to the smallest test MSE
+
+E.  MSE -- Mean Squared Error.
+
+F.  Expected MSE or a measure of how well on average our approximation function $\hat{f}$ at $x_0$ is estimating the true value $y_0$
+
+G.  Squared Bias --- error in MSE due to errors in fitting the true $f$ with our approximate $\hat{f}$
+
+H.  Variance of the Estimator --- "refers to the amount by which $\hat{f}$ would change if we estimated it using a different training data set". ISL 34. in $f \neq \hat{f}$ due to using a learning algorithm that might not be able to represent the complexities in $f$
+
+I.  Unlearnable error due to either not having all the predictive variables in our model (predictors that if we could get values for would improve our ability to learn the function $f$) or error that is intrinsic to the process which we model
+
+Based on this graph, for each of the following questions, provide an answer along with a short description.
+
+
+## 1a
+
+**True or False:** The squared bias of a model is always a greater source of error than the variability of a model.
+
+**Answer**:  F
+
+## 1b
+
+**True or False.** Well-designed models can always get very close to perfect predictions.
+
+**Answer**:  F
+
+
+## 1c
+
+**True or False.** The best balance of bias and variance can be approximated based on the available data.
+
+**Answer**: F
+
+## 1d
+
+**True or False.**  A model that overfits the training data will create errors on the testing set mostly due to its bias.
+
+**Answer**: F
+
+
+## Question 2:  Linear Regression
+
+
+We have provided a data set on the fuel economy of automobiles (Original source:  https://fueleconomy.gov/feg/download.shtml).  These data include a large number of records for different automobiles in the years from 1984 through 2020.  Use these data to answer the following questions.
+
+Note:  You do not need to do any pre-processing of the data or impute any missing data.  Please use the data set in its present form.
+
+## 2a The Data
+
+
+Read the data into R.  Show the first 5 rows of the data set.
+
+```{r read_data}
+df <- read.csv('vehicles.csv')
+head(df,5)
+```
+
+## 2b Building a Model
+
+Some of the rows of the data set include information on fuel economy (mpgData is "Y") while others do not (mpgData is "N").  Where the data are available, let's build a model to estimate the highway economy (**UHighway**) in terms of the following predictors:
+
+* **cylinders**:  the number of cylinders, which provides a measure of how powerful the engine is
+* **automatic**:  1 if the transmission is automatic and 0 if it is manual
+* **year**:  the model year of each car, such as the 2018 version of a specific type of car.  This is also expressed in numeric form.
+
+Display a summary of the coefficients.
+
+```{r linear_model_summary}
+
+df <- df[df$mpgData == "Y",c("UHighway","cylinders","automatic","year")]
+lm <- lm(UHighway ~., data = df)
+summary(lm)
+
+```
+
+## 2c Creating Confidence Intervals
+
+Without using an off-the-shelf method for generating confidence intervals, how would you calculate the 95% confidence intervals for the coefficients of the linear model?  Display a table with the coefficient for each predictor along with the lower and upper bounds of its 95% confidence interval.  Your answer can be computed from the estimated coefficients of the model, their estimated standard errors, and the 97.5th percentile of the standard normal curve.  This percentile can be calulated with **qnorm(p = 0.975)** in R; it has the value `r qnorm(p = 0.975)`.
+
+```{r lm_coef_ci}
+library(tidyverse)
+#option 1
+confint(lm)
+
+#option 2
+predictor <- c("cylinders","automatic","year")
+coef <- summary(lm)$coefficients[-1,1] 
+
+se <- summary(lm)$coefficients[-1,2] 
+low <- qnorm(0.025, mean = coef, sd = se)
+high <- qnorm(0.975, mean = coef, sd = se)
+
+lm_coef_ci <- as_tibble(list("Predictor" = predictor,"Estimate" = coef, "SE" = se, "2.5%"= low, "97.5%"=high ))
+
+lm_coef_ci
+
+```
+
+## 2d Improvements Over Time
+
+When adjusting for the cylinders and type of transmission, have the average highway fuel economy figures been increasing over time?  If so, by how much?
+
+```{r calculate_improvement}
+summary(lm)$coefficients[3,2] 
+
+#for vehicles with same cylinder numbers and same type of transmission, the model year increase by one unit, the average highway fuel economy increases by 0.1332613 mpg. 
+
+#for vehicles with same cylinder numbers and same model year, automatic vehicles consumes 1.122666 less mpg compared to non-automatic vehicles.
+#for automatic transmission vehicles, one cylinder and one year of model increase will result in -3.9198970+0.2929639 decrease of fuel economy.
+```
+
+
+## 2e Generating a Prediction
+
+If someone told you that they drove a car with 6 cylinders and an automatic transmission that was from model year 2001, how many miles per gallon would you estimate for this car on the highway?  Use R's **predict** function on the linear model to generate an answer.
+
+```{r predict_UHighway_lm}
+
+newdata = data.frame(cylinders=6, automatic = 1, year = 2001)
+
+
+predict(lm, newdata = newdata)
+```
+
+
+## 2f Building a Prediction Function
+
+Now let's write our own function to create a prediction from a linear regression model.  Call your function **my.predict.lm**.  For this, we will mirror the design of R's **predict.lm** function (in a simplified way), which is called by R's **predict** function when the input's object is a linear regression model.  Your **my.predict.lm** function will have the following inputs:
+
+* **object**:  this should be a linear regression model, the result of calling the **lm** function.
+
+* **newdata**:  this will be a data.frame object.
+
+Apply your **my.predict.lm** function to the case in Question 2e to make a prediction for the highway mpg of the car with 6 cylinders and an automatic transmission from model year 2001.
+
+One way to simplify your implementation of the **my.predict.lm** function will be to use matrix multiplication.  Objects such as numeric vectors or data.frames can be converted to a matrix using the **as.matrix** function.  In R, matrices **a** and **b** can be multiplied using the operator %*% provided that a has the same number of columns as b has rows.  
+
+it will be necessary to convert the relevant columns of the **newdata** object into one matrix (this would be **a**) and convert the coefficients of the linear model into another matrix (this would be **b**).  To simplify matters, the linear model can be assumed to have an intercept with the name "(Intercept)".  The matrix of relevant columns for the newdata should include a column with the value **1** in every row to correspond to the intercept (e.g. in the first column).
+
+Extracting the relevant columns from the newdata will involve matching the names of the newdata with the rownames of the coefficients of the linear model.  Make sure that the columns are in the same order.
+
+As another simplification, we will assume that all of the variables in the model are numeric, which will eliminate the need for coding multiple columns to accomodate categorical variables.
+
+No steps are required to handle missing data.  When **newdata** includes a row with a missing value in one of the model's variables, the matrix multiplication will automatically compute a missing value (NA) as the result for that row.
+
+```{r novel_prediction_fn}
+
+my.predict.lm <- function(object, newdata) {
+  a = as.matrix(newdata, rownames = FALSE)
+  b = matrix(summary(object)$coefficients[,1],nrow = 4, ncol = 1)
+  a %*% b
+}
+
+```
+
+
+```{r my_prediction}
+object <- lm(UHighway ~., data = df)
+newdata = data.frame(1, cylinders=6, automatic = 1, year = 2001)
+my.predict.lm(object = object, newdata = newdata)
+
+```
+
+
+
+## Question 3:  KNN
+
+Using the fuel economy data, answer the following questions.
+
+## 3a KNN with 5 Neighbors
+
+Considering the situation mentioned in Question 3e, how would you predict the miles per gallon for this car if you used KNN with 5 neighbors?  Use the **knnregTrain** function in the **caret** library to build the model.  For this model, set the **use.all** parameter to FALSE.
+
+Note:  No scaling of the data should be used in this problem; it is fine to work with the original values of the data.  Also, you can remove any row with missing values using the **na.omit** function.
+
+
+```{r knn_5}
+#option 1, using knnregTrain function in the caret library
+library(caret)
+df <- na.omit(df)
+train <- df[,2:4]
+train_labels <- df[,1]
+test <- data.frame(cylinders=6, automatic = 1, year = 2001)
+
+knnregTrain( train, y=train_labels,test = test, k=5, use.all = FALSE)
+
+
+#option 2, using knn function in the class library 
+library(class)
+knn(train, test, train_labels, k = 5)
+```
+
+## 3b KNN
+
+How would your answer differ if you used KNN with 20 neighbors instead?
+
+```{r knn_20}
+knnregTrain( train, y=train_labels,test = test, k=20, use.all = FALSE)
+```
+
+
+## 3c More Local or More Global?
+
+What would be the reasons to consider a KNN model with fewer neighbors, and what would be the advantages of using a greater number of neighbors?
+
+When use only a few neighbors, our model may behave as overfitting. As we increase K, the training error will increase and the bias increase, but the test error may decrease at the same time (decrease variance). With larger K, we consider more neighbors, and the model behaves as underfitting but gives a more smooth decision.

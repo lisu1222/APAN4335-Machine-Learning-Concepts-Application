@@ -1,0 +1,553 @@
+---
+title: "Homework 1"
+author: "Li Su"
+date: "2019/06/10"
+output:
+  prettydoc::html_pretty:
+  theme: cayman
+highlight: github
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment="", warning = FALSE, message = FALSE, tidy.opts=list(width.cutoff=55), tidy = FALSE)
+```
+
+```{r libraries}
+library(ISLR)
+library(scales)
+library(knitr)
+library(prettydoc)
+```
+
+```{r source_files}
+
+```
+
+```{r functions}
+
+```
+
+```{r constants}
+set.seed(41)
+```
+
+```{r load_data}
+
+```
+
+```{r clean_data}
+
+```
+
+
+## Question 0:  Survey (2 points)
+
+I would like to get an idea of your interests in Machine Learning and your background. Please tell me:
+
+* Your last degree program (B.A., M.A., E.D., Ph.D., etc) ? Your Major and year
+
+* Your proficiency with Calculus -- Scale 1 (Beginner) -5 (Advanced): 
+
+* Your proficiency with Linear Algebra -- Scale 1 (Beginner) -5 (Advanced):  
+
+* Your statistical proficiency (Probability, Statistical Distributions) -- Scale 1 (Beginner) -5 (Advanced):  
+
+* Your proficiency with Regression Models (Linear, Logistic, etc.) -- Scale 1 (Beginner) -5 (Advanced):  
+
+* Your proficiency with R programming (Plots, Functions, Rmarkdown), Scale 1 (Beginner) --
+5 (Advanced):  
+
+The assignment includes a spreadsheet **survey.csv**.  Please fill out the information and submit it along with your homework.
+
+
+## Question 1 (2 points)
+
+We will be using Rstudio in this class to implement the algorithms we learn in class. The goal of this assignment is to get you proficient in the basics of R, such as writing scripts and plotting. If you are having trouble, you can find help by searching the internet (often searching for the specific error message is helpful), reading Data Mining with R by Luis Torgo or R in a Nutshell by Joseph Adler, asking your friends, and coming to office hours. The computing homework needs to be submitted with your name and Uni# with Rmarkdown file and a pdf with the code and explanation.
+
+Install the **R** and **RStudio** programs on your computer.  Then, inside of RStudio, use the **install.packages** function to install **RMarkdown**.  Then, in the code chunk below, type **version**.
+
+```{r q1}
+library(rmarkdown)
+version
+```
+
+## Question 2 (10 points)
+
+### 2a (5 points)
+
+Write a function called **even.or.odd**.  Its parameter **x** will be a numeric vector.  Return a character vector that says "odd" for odd numbers and "even" for the even numbers.  The results should correctly classify every value.  To determine if a number is even or odd, you can use the modulus operator **%%** (e.g.: 5%%3 = 2).  Note:  Try to find a solution that uses vector logic instead of a for loop.  In R, this is a good programming practice that will speed up your programs.
+
+Display the results of this function on the vector 1:5.
+
+```{r q2a}
+x <- c ( 1 , 4 , 5 , 7 , 9)
+even.or.odd <- function (x) {
+  ifelse ( x %% 2 == 0, 'even','odd')
+}
+even.or.odd(x)
+```
+
+### 2b (5 points)
+
+Write a function **my.sum** that computes the sum of a numeric vector **x**.  The user can also specify **the.type** as a character.  If **the.type** is "even", the function will compute the sum of only the even values in **x**.  If **the.type** is "odd", the function will compute the sum of only the odd values in **x**.  If **the.type** is "all", the function will compute the sum of the entire vector **x**.  Within the function, you may use the built-in **sum** function.  The function should omit missing values (NA) from the sum.  This can be done using the **na.rm** argument within the **sum** function.
+
+Display the results of this function for **odd**, **even**, and **all** values of the vector 1:5.
+
+```{r q2b}
+my.sum <- function(x, the.type) {
+  if(the.type == "even"){
+    sum(x[(x %%2 == 0)], na.rm = TRUE)
+  }
+  else if(the.type == "odd"){
+    sum(x[(x %%2 == 1)], na.rm = TRUE)
+  }
+  else if(the.type == "all"){
+    sum(x, na.rm = TRUE)
+  }
+}
+
+my.sum(1:5, the.type ="even")
+
+```
+
+## Question 3 (10 points)
+
+Load package **datasets** and load the **iris** data set. We will try to predict the species of iris from the sepal's length and width and the petal's length and width using k−nearest neighbors.
+
+### 3a (5 points)
+
+Divide the data into training and testing sets.  To do so, let's create an assignment vector called **training_row**.  Each row of the data set will be assigned to the training set (with **training_row** set to TRUE) with probability 0.8 or to the test set (with **training_row** set to FALSE) with probability 0.2. Use the **sample** function to create the **training_row** vector of TRUE and FALSE values.  The vector should be as long as the number of rows in the iris data set.
+
+Then, divide the **iris** data set into separate training and test sets according to the **training_row** assignments.
+
+In order to obtain consistent results, we'll need to set the seed of R's pseudo-random number generator.  To do so, use **set.seed(41)** in the code chunk labeled **constants** above.
+
+```{r q3a}
+library(datasets)
+set.seed(41)
+##create normalization function 
+##nor <-function(x) { (x - min(x)) / (max(x) - min(x))  }
+#run normalization function on first 4 columns of df
+##df_norm <- as.data.frame (lapply (df [ , c(1,2,3,4) ], nor))
+
+#extract training and testing set
+training_row <- sample(1:nrow (iris) , 0.8*nrow (iris))
+train <- iris[training_row, ]
+test <- iris[- training_row, ]
+```
+
+### 3b (5 points)
+
+Use the function **knn** from the package **class** with **k = 2** to classify the data.  What proportion of the values are misclassified on the testing set?
+
+**Note**:  In order to use *knn*, the **train** and **test** objects must only include the columns that are used to make the classification.  The Species will need to be separated into the **cl** vector and removed from the **train** and **test** objects.
+
+```{r q3b}
+library(class)
+#seperate variable of interest into cl vectors
+train_labels <- train[, 5] 
+test_labels <- test[, 5]  
+#predict classication using train_lables for test set
+pred <- knn (train[,-5], test[,-5], cl = train_labels, k = 2)
+#calculate misclassification rate
+mean(test_labels != pred)
+#alternativley use: sum(test_labels!=pred)/sum(nrow(test)) or use confusion matrix
+conf <- table(test_labels,pred)
+conf
+1-sum(diag(conf))/sum(conf)
+```
+
+## Question 4 (8 points)
+
+Now perform the **knn** classification for each **k** value from 1 to 50.  For each value of **k**, compute the percentage of misclassified values on the testing set.  Print out your results as a table showing the values of k and the misclassification rates.  You can use the **datatable** function in the **DT** package to display an HTML-friendly table.
+
+**Note**:  It would help to write a function that performs the knn computation and computes the misclassification rates.
+
+
+```{r q4}
+
+#define range of k_value and misclassification rate
+k_values = 1 : 50
+mis_df <- data.frame( k = rep(0 , length(k_values)), mis_rate = rep (0 , length(k_values)))
+for ( i in k_values) {
+  k <- k_values[i]
+  # Make predictions using knn: pred
+  pred.i <- knn(train[,-5], test[,-5], train_labels, k = i)
+  # Calculate the misclassificatin rate and store it in mis.i
+  mis.i <- mean(test_labels != pred.i)
+  mis_df[i,'k']<- k
+  mis_df[i,'mis_rate']<- mis.i
+}
+mis_df
+# load DT
+library(DT)
+#using the datatable function in the DT package to display an HTML-friendly table.
+datatable (mis_df)
+```
+
+## Question 5 (20 points)
+
+Use your answers from Question 4 to display the results in the questions below.
+
+### 5a (5 points)
+
+Plot the misclassification rates on the testing set versus the value of k.  Use the **plot** function.  Try different values of the arguments (las, xlim, ylim, xlab, ylab, cex, main) to create a nicer display.  Use **type = "both"** to display both the points and a line.
+
+```{r q5a}
+
+# Plot the misclassification
+plot(mis_df$k, mis_df$mis_rate, main = "Misclassification Rates vs Neighbors",  xlab = "k, number of neighbors", ylab = "Misclassification Rates", cex =0.5, type = "both")
+
+```
+
+### 5b (5 points)
+
+Now create the same plot placing **k** on a *logarithmic** scale.  Make sure to change the label of the x axis to distinguish this.
+
+```{r q5b}
+
+plot(mis_df$k, mis_df$mis_rate, log = "x", main = "Misclassification Rates vs Neighbors",  xlab = "K in log-scale", ylab="Misclassification Rate",cex = 0.5, type = "both")
+
+```
+
+### 5c (10 points)
+
+Let's examine how the results would change if we were to run the knn classifier multiple times.  Perform the following steps:
+
+1.  Re-perform the previous work 3 more times.  Each time, you should create a new training and test set, apply **knn** on each value of **k** from 1 to 50, and compute the misclassification rates on the testing set.
+
+2.  Plot the results of the earlier work along with the 3 new iterations on a single plot.  Use the **lines** function to add additional lines to the earlier plot from 5a (using the linear scale).  Use different colors, line types (lty), and point characters (pch) to distinguish the lines.
+
+3.  Use the **legend** command to place a legend in the top left corner (x = "topleft") of the plot.  Use the same colors and point characters to display which line is which.  Label the iterations 1 through 4.
+
+```{r q5c}
+#create function knn_output(k_values)
+knn_output <- function(k_values = 1:50){
+  training_row = sample(1:nrow (iris) , 0.8*nrow (iris))
+  train = iris[ training_row, ]
+  test = iris[- training_row, ]
+  train_labels <- train[, 5] 
+  test_labels <- test[, 5]  
+  k_values <- 1 : 50
+  mis_df <- data.frame( k = rep( 0 , length(k_values)), mis_rate = rep (0 , length(k_values)))
+  for (i in k_values){
+    k <- k_values[i]
+    pred.i <- knn(train[,-5], test[,-5], train_labels, k = i)
+    mis.i <- mean(test_labels != pred.i)
+    mis_df[i,'k']<- k
+    mis_df[i,'mis_rate']<- mis.i
+  }
+  mis_df
+}
+
+#run another 3 iterations
+knn2 <-knn_output(k_values = 1:50)
+knn3 <-knn_output(k_values = 1:50)
+knn4 <-knn_output(k_values = 1:50)
+
+#create plot
+plot(mis_df$k, mis_df$mis_rate, main = "Misclassification Rates vs Neighbors", xlab = "k, number of neighbors", ylab = "Misclassification Rates", col = "black",lty = 1, pch = 1,type = "b",ylim = c(0,.3))
+#add lines of knn2, knn3, knn4
+lines(mis_rate ~ k, knn2, col="blue" , lty=2,pch = 2,type = "b",ylim=c(0,.3))
+lines(mis_rate ~ k, knn3, col ="red", lty=3,pch = 3,type = "b",ylim=c(0,.3))
+lines(mis_rate ~ k, knn4, col ="green", lty=4,pch = 4,type = "b",ylim=c(0,.3))
+#add legend
+legend("topleft", 
+  legend = c('iteration 1','iteration 2','iteration 3','iteration 4'), 
+  col = c("black","blue","red","green"), 
+  bty = "n", 
+  cex = 0.8, 
+  text.col = c("black","blue","red","green"), 
+  horiz = F,
+  lty=c(1,2,3,4),
+  pch = c(1,2,3,4))
+
+
+#My first try:
+#knn_mis_rate <- function(k){
+#  training_row = sample(1:nrow (iris) , 0.8*nrow (iris))
+#  train = iris[ training_row, ]
+#  test = iris[- training_row, ]
+#  train_labels <- train[, 5] 
+#  test_labels <- test[, 5]  
+# pred <- knn (train[,-5], test[,-5], train_labels, k)
+#  #calculate mis_rate
+#  mis_rate <- mean(pred != test_labels)
+#  return(mis_rate)
+#}
+
+#knn_output <- function(k_values = 1:50){
+#  k_values = 1:50
+#  mis_rate = c()
+#  for (k in k_values){ 
+#    mis_rate[k] = knn_mis_rate(k)
+#}
+#  cbind.data.frame(k_values, mis_rate)
+#}
+
+```
+
+## Question 6 (22 points)
+
+Here we’ll work with the Hitters database from the ISLR library, which contains Major League Baseball Data from the 1986 and 1987 seasons (322 observations on 20 variables). For a description of the variables go to: https://rdrr.io/cran/ISLR/man/Hitters.html Install the **ISLR** package in R if you have not done so already
+
+### 6a (2 points)
+
+What are the dimensions of the data set?
+
+```{r q6a}
+library(ISLR)
+dim(Hitters)
+```
+
+### 6b (2 points)
+
+How many salaries are missing (NA)?
+
+```{r q6b}
+sum(is.na(Hitters$Salary))
+```
+
+### 6c (2 points)
+
+What is the maximum number of career home runs?
+
+```{r q6c}
+max(Hitters$CHmRun)
+```
+
+### 6d (2 points)
+
+Compute the **min**, **median**, **mean**, and **max** of Hits, Home Runs, and Runs for a season (not career totals).  Remove any missing values from the calculations.  Round your results to 1 decimal place.
+
+```{r q6d}
+
+cal <- function(x) {
+  c(min = round(min(x, na.rm = TRUE),1), 
+    median = round(median(x,na.rm = TRUE),1),
+    mean = round(mean(x,na.rm = TRUE),1),
+    max = round(max(x,na.rm = TRUE),1)
+  )
+}
+
+sapply(Hitters[,c("Hits","HmRun","Runs")], cal)
+```
+
+### 6e (2 points)
+
+What percentage of these players's seasons had at least 100 hits and 20 home runs?  Use the **percent** function in the **scales** package to convert a decimal proportion to a percentage.
+
+```{r q6e}
+library('scales')
+n <- nrow(subset(Hitters,Hits >= 100 & HmRun >= 20))
+percent(n/nrow(Hitters))  
+```
+
+### 6f (2 points)
+
+What is the relationship between different pairs of variables?  Let's look at Salary, Hits, Runs, HmRun, Errors, and Assists.  Use the **pairs** function to display scatterplots of each pair of these variables.
+
+```{r q6f}
+pairs(Hitters[,c("Salary","Hits","Runs","HmRun","Errors","Assists")], lower.panel = NULL )
+```
+
+### 6g (2 points)
+
+Based on these scatterplots, which variables appear to be correlated with Salary, and which ones appear to have little or no correlation with Salary?  Provide a short explanation for your assessment.
+
+Based on these scatterplots, Hits, Runs, HmRun appear to be positively correlated with Salary because the there're clear positive associate for Salary-Hits, Salary-Runs, Salary-HmRun, which represent moderate linear relationships.
+Errors and Assists appear to have little or no correlation with Salary as the points are dispersed without clear cirection and form.
+To quantify the correlations, a correlation matrix can be applied using the function: cor(df[,c("Salary","Hits","Runs","HmRun","Errors","Assists")], use = "complete.obs")
+
+### 6h (2 points)
+
+Create a new variable called HighRBI for those players with at least 75 RBI (TRUE).  Players with less than 75 RBI should have the value FALSE.
+
+```{r q6h}
+
+library(dplyr)
+H <- mutate(Hitters , HighRBI = ifelse ( RBI >= 75, 'TRUE', "FALSE"))
+H$HighRBI <- as.logical(H$HighRBI)
+
+#H <- Hitters %>% 
+#  mutate(HighRBI = as.factor(case_when(
+#  RBI >=75 ~ 'TRUE',
+#  RBI <75 ~ 'FALSE'
+#  )
+#  )
+#)
+
+
+```
+
+### 6i (2 points)
+
+What percentage of hitters qualified as HighRBI during these seasons?
+
+```{r q6i}
+
+percent(mean(H$HighRBI == TRUE))
+
+```
+
+### 6j (2 points)
+
+What is the correlation of HighRBI, Home Runs, Hits, Runs, Assists, and Errors with Salary?  Use only the cases in which both variables are measured.  Round the answer to two decimal places.
+
+```{r q6j}
+
+##calculate correlation coefficient matrix for numeric variables, round to 2 decimal
+round(cor(H[,c("Salary","Hits","Runs","HmRun","Assists","Errors","HighRBI")], use = "complete.obs") , 2)
+
+```
+
+### 6k (2 points)
+
+How did the salaries differ for players with and without HighRBI?  Use the **boxplot** function and **split** the salary data by HighRBI status.  Do HighRBI players have a higher median salary?
+
+```{r q6k}
+#careate a boxplot
+boxplot(Salary~HighRBI,data= H, xlab = "RBI greater than 75")
+
+##Based on the Boxplot, HighRBI players have a higher median salary than non-highRBI players.
+
+```
+
+### 6l (2 points)
+
+Show a histogram of home runs using the **hist** function with **breaks = 20** and **freq = FALSE**.
+
+```{r q6l}
+
+hist(H$HmRun,breaks = 20, freq = FALSE, main = "Home Runs", xlab = "Home Runs" )
+```
+
+
+## Question 7 (10 points)
+
+### 7a (2 points)
+
+What is the mean and standard deviation of Hits, Runs, Home Runs, RBI, Assists, Errors, and Salaries?  Remove any missing values from the calculations.  Round the answers to 1 decimal place.
+
+```{r q7a}
+
+# calculate mean for Hits, Runs, Home Runs, RBI, Assists, Errors, and Salaries
+
+v <- c("Hits", "Runs", "HmRun", "RBI", "Assists","Errors","Salary")
+
+multi.fun <- function(x) {
+      c(mean = round(mean(x, na.rm = TRUE),1), sd = round(sd(x,na.rm = TRUE),1))
+}
+
+sapply(H[, v], multi.fun)
+
+```
+
+### 7b (3 points)
+
+Some players only get to play part-time.  Show the mean and standard deviations for the same variables as in the previous question **only for players with at least 300 AtBat**.
+
+```{r q7b}
+
+sapply(H[H$AtBat >= 300, v], multi.fun)
+
+```
+
+### 7c (3 points)
+
+Show a scatter plot of Salary versus Home Runs for players with at least 300 AtBat.
+
+```{r q7c}
+
+plot(Salary ~ HmRun, H[H$AtBat>=300,])
+
+```
+
+
+### 7d (2 points)
+
+There is a player with zero home runs and a salary over 2,000 (more than 2 million dollars).  Who is this player?  What does it look like happened during the season?  Are these numbers accurate?  Use the internet to search for this player's results in 1986 and 1987.
+
+```{r q7d}
+#find the player with HmRun === 0 and Salary > 2000
+subset(Hitters, HmRun == 0 & Salary>2000 )
+
+#the player is Mike Schmidt. These numbers are inaccurate. He had 552 AtBat, 160 Hits, 37 HmRuns and 119 RBI in 1986 season.
+```
+
+
+## Question 8 (14 points)
+
+After exploring the Hitters data so extensively, you are asked to build a regression model to predict the hitter's salary. 
+
+### 8a (7 points)
+
+Build a linear regression model and explain how (or why) you choose certain predictors in your model. Use 70% of the valid data for training and the remaining 30% of the valid data for testing. Please report the Room Mean Squared Error of the model on both the training and testing sets. Note that, what data are considered as "valid" is up to you based on your data exploration. For example, you can exclude certain data because of either missing data or outliers. But please explain how you determine your validate dataset.
+
+```{r q8a}
+
+round(cor(H[,c(1:13,16:19)], use = "complete.obs") , 2)
+#From the correlation matrix, CAtBat,CHits,CHmRun,CRuns,CRBI,CWalks are highly correalted with #Salary, with correlation coefficient all above 0.50. Besides, a player's salary is based on his #career records, not very related to stats for the current season. Therefore, I will use thoese #variables as predictors for my model.
+
+# there are missing values in set, which will hamper the linear models. Remove NA values:
+H <- na.omit(Hitters[,c("Salary","CAtBat","CHits","CHmRun","CRuns","CRBI","CWalks")])
+sum(is.na(H))
+
+#find outliers using boxplot outcome
+findOutliners <- function(x){
+  outliers <- boxplot(x, plot=FALSE)$out
+  which(x %in% outliers)
+}
+
+#remove all outliers 
+dim(H)
+H <- H[ -findOutliners(H$CHits), ]
+H <- H[ -findOutliners(H$CRBI), ]
+H <- H[ -findOutliners(H$CAtBat), ]
+H <- H[ -findOutliners(H$CHmRun), ]
+H <- H[ -findOutliners(H$CRuns), ]
+H <- H[ -findOutliners(H$CWalks), ]
+H <- H[ -findOutliners(H$Salary), ]
+dim(H) #212 records left, 263-212 =51 observations removed
+
+#subset train and test set
+set.seed(55)
+train_index = sample(1:nrow (H) , 0.7*nrow (H))
+H_train = H[train_index, ]
+H_test = H[- train_index, ]
+
+#build linear regression model
+lm <- lm(Salary ~ CRBI + CAtBat + CHmRun + CRuns + CHits + CWalks,data = H_train)
+#prediction on training set
+pred_train <- predict(lm)
+#calculate rmse
+lm_train_rmse <- sqrt(mean((H_train$Salary - pred_train)^2, na.rm = TRUE))
+#prediction on test set
+pred_test <- predict(lm,H_test)
+lm_test_rmse <- sqrt(mean((H_test$Salary - pred_test)^2, na.rm = TRUE))
+
+cbind(Model = "LM", `Training RMSE` = lm_train_rmse, `Test RMSE` = lm_test_rmse)
+```
+
+
+
+### 8b (7 points)
+Repeat question 8a using KNN with 5 neighbors.
+
+```{r q8b}
+#subset data, assign cl labels
+knn_train = H_train[ , -1]
+knn_test = H_test[, -1]
+knn_train_labels <- H_train[, 1] 
+knn_test_labels <- H_test[, 1] 
+
+#build knn model on train and test sets
+knn_training_pred <- knn(knn_train, knn_train, knn_train_labels,  k = 5)
+knn_test_pred <- knn(knn_train, knn_test,knn_train_labels,  k = 5)
+
+#calculate rmse
+knn_training_rmse <- sqrt(mean((as.numeric(knn_training_pred) - knn_train_labels)^2, na.rm = TRUE))
+knn_test_rmse <- sqrt(mean((as.numeric(knn_test_pred) - knn_test_labels)^2, na.rm = TRUE))
+
+cbind(Model = "KNN",`Training RMSE` = knn_training_rmse, `Test RMSE` = knn_test_rmse)
+```
