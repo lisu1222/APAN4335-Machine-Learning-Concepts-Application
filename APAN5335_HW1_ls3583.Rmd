@@ -39,27 +39,6 @@ set.seed(41)
 
 ```
 
-
-## Question 0:  Survey (2 points)
-
-I would like to get an idea of your interests in Machine Learning and your background. Please tell me:
-
-* Your last degree program (B.A., M.A., E.D., Ph.D., etc) ? Your Major and year
-
-* Your proficiency with Calculus -- Scale 1 (Beginner) -5 (Advanced): 
-
-* Your proficiency with Linear Algebra -- Scale 1 (Beginner) -5 (Advanced):  
-
-* Your statistical proficiency (Probability, Statistical Distributions) -- Scale 1 (Beginner) -5 (Advanced):  
-
-* Your proficiency with Regression Models (Linear, Logistic, etc.) -- Scale 1 (Beginner) -5 (Advanced):  
-
-* Your proficiency with R programming (Plots, Functions, Rmarkdown), Scale 1 (Beginner) --
-5 (Advanced):  
-
-The assignment includes a spreadsheet **survey.csv**.  Please fill out the information and submit it along with your homework.
-
-
 ## Question 1 (2 points)
 
 We will be using Rstudio in this class to implement the algorithms we learn in class. The goal of this assignment is to get you proficient in the basics of R, such as writing scripts and plotting. If you are having trouble, you can find help by searching the internet (often searching for the specific error message is helpful), reading Data Mining with R by Luis Torgo or R in a Nutshell by Joseph Adler, asking your friends, and coming to office hours. The computing homework needs to be submitted with your name and Uni# with Rmarkdown file and a pdf with the code and explanation.

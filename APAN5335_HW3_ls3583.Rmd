@@ -401,7 +401,7 @@ What does it mean to **add information** to a model?  Is clustering a worthwhile
 
 We have several candidate models here to represent the true relation between predictors and outcome. If we knew the true relation, then we could find the information lost from using a candidate model to represent the true model. We want to choose the candidate model that minimized the information loss. If a candidate model, compared to another candidate model, has more information gain, the model quality is relatively lower. AIC is the estimator of the relative quality of statistical models for a given set of data. It is a means for model selection that deals with the trade-off between bias and variance.
 
-Clustering is not a worthwile exercise as a method of building a predictive model, because clustering assignments can be directly predicted from the other predictors, resulting in redundancy. Although it doesn't reduce the predictive power of the model as a whole, it affects our interpretation of indivadual predictors. Also, the coefficient estimates may change erratically in response to small changes in the model or the data. 
+Clustering IS a worthwile exercise as a method of building a predictive model as clustering can discover relationships in data that predictive of the outcome but are not yielded by raw predictors and the algorithm alone.
 
 
 ## Question 5:  Description Versus Prediction
@@ -417,4 +417,4 @@ We are more interested in inference rather than prediction here, to find the unb
 
 Would it even make sense to use the logistic regression model for the Titanic's passengers to make a prediction?  Explain your opinion with a few sentences.
 
-No, it would not make sense to use the logistic regression model to make a prediction. Because the logistic regression model we built hasn't been evaluated on any samples that were not used to build the model, so that it can provide an unbiased sense of model effectiveness. A biased model that will lead to overfitting, if used to run prediction on unseen data. The Train-Test-Validation process attempts to estimate the over-fitting of the model, in order to to achive generalization.
+No, it would not make sense to use the logistic regression model to make a prediction. Because the logistic regression model we built hasn't been evaluated on any samples that were not used to build the model, so that it can provide an biased sense of model effectiveness. A biased model that will lead to overfitting, if used to run prediction on unseen data. The Train-Test-Validation process attempts to estimate the over-fitting of the model, in order to to achive generalization.

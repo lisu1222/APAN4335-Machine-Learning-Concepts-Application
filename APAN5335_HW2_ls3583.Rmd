@@ -86,7 +86,7 @@ Based on this graph, for each of the following questions, provide an answer alon
 
 **True or False.** The best balance of bias and variance can be approximated based on the available data.
 
-**Answer**: F
+**Answer**: T
 
 ## 1d
 
